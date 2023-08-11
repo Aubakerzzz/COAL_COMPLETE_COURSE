@@ -1,0 +1,51 @@
+.model small
+.stack 100h
+
+;Question 01
+
+
+.data
+
+array db 0, 2 ,4, 6 ,8 
+
+
+.code
+mov ax, @data
+mov ds, ax
+mov ax, 0
+
+
+main proc
+
+mov si, OFFSET array
+mov cx, 5
+
+L1:
+	push[si]
+	inc si
+LOOP L1
+
+mov al ,0  
+
+L2:
+	pop bx
+	inc al
+	cmp al, 5
+	je exit
+LOOP L2
+
+
+main endp
+end main
+
+exit:
+	mov ah , 4ch
+	int 21h
+	end
+
+
+
+
+
+
+

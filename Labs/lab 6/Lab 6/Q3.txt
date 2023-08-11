@@ -1,0 +1,90 @@
+.model small
+.stack 100h
+
+;Question 02
+
+
+.data
+
+x1 db 1
+x2 db 2
+x3 db 3
+
+msg1 db "X1 Greatest"
+msg2 db "X2 Greatest"
+msg3 db "X3 Greatest"
+
+.code
+mov ax, @data
+mov ds, ax
+mov ax, 0
+
+
+LP
+
+cmp al, bl
+ja L1
+
+cmp bl,cl
+ja L3
+
+cmp cl,al
+ja LL1
+
+LOOP LP
+
+LL1:
+	cmp cl,bl
+	Ja LL2
+	Jna LP
+
+
+LL2:
+	mov dx, OFFSET msg3
+	mov ah, 04ch
+	int 21h
+	end
+
+
+L3:
+	cmp bl ,al
+	ja L4
+	jna LP
+
+
+L4:
+	mov dx, OFFSET msg2
+	mov ah, 04ch
+	int 21h
+	end
+	
+
+
+L1:
+	cmp al, cl
+	ja L2
+	jna LP
+
+
+L2:
+	mov dx, OFFSET msg1
+	mov ah, 04ch
+	int 21h
+	end
+	
+
+	
+
+
+	
+
+
+
+
+
+
+
+
+
+
+

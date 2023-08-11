@@ -1,0 +1,55 @@
+.model small
+.stack 100h
+
+;Question 02
+
+
+.data
+
+msg1 db "F"
+msg2 db "Nf"
+array db 1 ,2 ,3 ,4, 5
+
+.code
+mov ax, @data
+mov ds, ax
+mov ax, 0
+
+
+mov cx, 5
+mov esi, OFFSET array
+
+L1:
+	cmp[esi],2
+	je L3
+	inc esi
+	cmp cx, 0
+	je L2
+	LOOP L1
+
+L2:
+	mov dx , OFFSET msg2
+	jmp exit
+
+L3:
+	mov dx, OFFSET msg1
+	jmp exit
+	
+	
+
+exit:
+mov ah, 04ch
+int 21h
+end
+
+
+
+
+
+
+
+
+
+
+
+

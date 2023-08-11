@@ -1,0 +1,45 @@
+.model small
+.stack 100h
+
+
+.data
+
+array db 0, 2 ,4, 6 ,8 
+
+.code
+mov ax, @data
+mov ds, ax
+mov ax, 0
+
+
+mov si, OFFSET array
+
+push si
+
+CALL sum
+exit::
+pop bx
+mov ah , 4ch
+	int 21h
+	main endp
+sum proc
+
+   pop bx
+mov bx, 0
+   pop si
+   mov cx, 5	
+   LOOP1
+	add bx, [si]
+	inc si
+	LOOP LOOP1
+
+push bx
+jmp exit
+ret 
+
+sample endp
+
+
+end main
+
+

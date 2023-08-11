@@ -1,0 +1,54 @@
+.model small
+.stack 100h
+
+;Question 01
+
+
+.data
+
+array word 50 dup(?)
+
+.code
+mov ax, @data
+mov ds, ax
+mov ax, 0
+
+mov dx, 1
+mov bl, 2
+
+L1:
+	
+	mov ax, dx 
+	inc dx 
+	div bl
+	cmp ah, 0
+	jne L2
+	LOOP L1
+	cmp cx , 0
+	je exit
+	L2:
+		mov[si],al
+		inc al
+		inc si
+	LOOP L1
+	
+	
+
+
+
+exit:
+mov ah, 04ch
+int 21h
+end
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,72 @@
+.model small
+.stack 100h
+
+;Question 05
+
+
+.data
+
+var1 db 5
+
+msg1 db "PrimeNumber"
+msg2 db "Not PrimeNumber" 
+
+.code
+mov ax, @data
+mov ds, ax
+mov ax, 0
+
+mov ax, 2
+mov dx, 2
+mov bl, var1
+
+LOOP1:
+
+mov ax, dx
+inc dx
+div bl
+cmp ah, 0
+je L1
+jne L2
+dec bl
+cmp bl,0
+je exit
+
+LOOP LOOP1
+
+L1:
+
+	mov dx, OFFSET mssg1
+	LOOP LOOP1
+
+	
+L2:
+	mov dx, OFFSET mssg2
+	LOOP LOOP1
+
+
+exit:
+
+	mov ah, 04ch
+	int 21h
+	end
+	
+	
+
+
+
+	
+
+
+	
+
+
+
+
+
+
+
+
+
+
+

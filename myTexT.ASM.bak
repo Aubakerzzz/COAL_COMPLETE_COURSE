@@ -1,0 +1,6429 @@
+;/-------------LAB 14--------------------------------------------------------------------------------
+
+	;*** GRADE A B C D F ***
+.MODEL SMALL 
+.STACK 100H 
+.DATA 
+  
+NUMBER DW 91
+
+STRING1 DB "$"
+COUNT DB 0
+  
+.CODE 
+MAIN PROC FAR 
+ MOV AX,@DATA 
+ MOV DS,AX 
+ MOV AX, 0
+ 
+ 
+	INPUT PROC
+			mov  ah, 9
+		  mov  ah, 0Ah
+		  mov  dx, offset string1
+		  int  21h
+		  mov  si, offset string1 + 1 
+		  mov  cl, [ si ]                                       
+		  mov  ch, 0
+		  add  si, cx 
+		  mov  bx, 0
+		  mov  bp, 1 
+		repeat1:        
+			inc count 
+			mov  al, [ si ] 
+			sub  al, 48 
+			mov  ah, 0 
+			mul  bp 
+			add  bx,ax 
+			mov  ax, bp
+			mov  bp, 10
+			mul  bp
+			mov  bp, ax   
+			dec  si 
+		loop repeat1
+	;newline
+	mov ah, 02h
+	mov dl, 10 ; ascii of enter
+	int 21h
+	MOV NUMBER, BX
+	
+	INPUT ENDP
+	
+	OUTPUT PROC
+
+	.IF (NUMBER < 50)
+		mov ah,02h
+		mov dl, 'F'
+		int 21h
+	.ENDIF
+	
+	.IF (NUMBER <= 59 && NUMBER >= 50)
+			mov ah,02h
+			mov dl, 'D'
+			int 21h
+	.ENDIF
+	
+	.IF (NUMBER <= 75 && NUMBER >= 60)
+			mov ah,02h
+			mov dl, 'C'
+			int 21h
+	.ENDIF
+	.IF (NUMBER <= 90 && NUMBER >= 76)
+			mov ah,02h
+			mov dl, 'B'
+			int 21h
+	.ENDIF
+	.IF (NUMBER <= 100 && NUMBER >= 90)
+			mov ah,02h
+			mov dl, 'A'
+			int 21h
+	.ENDIF	
+
+	OUTPUT ENDP
+  
+ ;interrupt to exit
+ MOV AH,4CH
+ INT 21H 
+  
+MAIN ENDP 
+END MAIN 
+
+
+;*************************REVERSING THE INPUT ENTERING BY USER **********************************************8
+
+
+.MODEL SMALL 
+.STACK 100H 
+.DATA 
+  
+COUNTER DB 0
+  
+.CODE 
+MAIN PROC FAR 
+ MOV AX,@DATA 
+ MOV DS,AX 
+ MOV AX, 0
+ 
+ 
+	INPUT PROC
+		
+		.WHILE COUNTER < 5
+			MOV AH, 1
+			INT 21H
+			MOV AH,0
+			PUSH AX
+			INC COUNTER
+		.ENDW
+		
+	INPUT ENDP	
+	
+	MOV COUNTER , 0
+	
+	OUTPUTSORTING PROC
+	
+		.WHILE COUNTER < 5
+			POP DX
+			MOV AH, 2
+			INT 21H
+			INC COUNTER
+		.ENDW
+	
+	OUTPUTSORTING ENDP
+	
+
+ 
+
+  
+ ;interrupt to exit
+ MOV AH,4CH
+ INT 21H 
+  
+MAIN ENDP 
+END MAIN 
+
+;****************file handling*******************************
+.model small
+.stack
+
+.data
+file db "myfile.txt",0
+msg db "HELLO :]]"
+msg1 db " DONE  :]]"
+FHANDLE DW 0
+.code
+start:
+main proc
+mov ax,@data
+mov ds,ax
+
+;load file handler
+mov dx,offset file
+mov al,1
+mov ah,3dh
+int 21h
+
+
+;Appending File
+mov bx,ax
+mov cx,0
+mov ah,42h
+mov al,02h
+int 21h
+
+;Writing File
+mov cx,lengthof msg; should have been 1 less than length of msg.
+mov dx,offset msg
+mov ah,40h
+int 21h
+
+;Writing File
+mov cx,lengthof msg1; should have been 1 less than length of msg.
+mov dx,offset msg1
+mov ah,40h
+int 21h
+
+;READ DATA FROM FILE
+		;MOV AH, 3FH
+		;LEA DX, BUFFER
+		;MOV CX, 100
+		;MOV BX, FHANDLE
+		;INT 21H
+		;LEA DX, BUFFER
+		;MOV AH, 09H
+		;INT 21H
+
+;close file
+mov ah,3eh
+int 21h
+
+
+	
+mov aH,04CH
+int 21h
+main endp
+end start
+end
+
+;/------- LAB 13---------------------/
+
+;QUESTION 01 : USE KEYBOARD INTERFACING TO FIND OUT IF ANY KEY IS PRESSED OR NOT.
+.MODEL SMALL
+.STACK 100H
+.DATA
+TEMP DB "KEY PRESSED$"
+.CODE
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+	L1:
+		MOV AX, 0100H
+		INT 16H
+		JZ L1
+   KEY_PRESSED:
+		LEA DX, TEMP
+		MOV AH, 09H
+		INT 21H
+		MOV AH, 00H
+		INT 16H
+EXIT::
+	MOV AH, 04CH
+	INT 21H
+	END
+	
+;QUESTION 02 : USE KEYBOARD INTERFACING TO FIND OUT WHICH KEY IS PRESSED.
+TEMP DB "YOU PRESS THIS KEY: $"
+TEMP1 DB "$"
+	L1:
+		MOV AX, 0100H
+		INT 16H
+		JZ L1
+   KEY_PRESSED:
+		MOV AH, 00H
+		INT 16H
+		MOV TEMP1,AL
+		LEA DX, TEMP
+		MOV AH, 09H
+		INT 21H	
+		MOV AH,02H
+		MOV DL, TEMP1
+		ADD DL, '0'
+		INT 21H
+;QUESTION 03: USE KEYBOARD INTERFACING INTERRUPT TO AND DRAW PIXELS AS YOU PRESS THE UP, DOWN, LEFT, AND RIGHT ARROW KEYS.
+	S1 DW 10
+	S2 DW 10
+	TEMP DW 20
+	MOV AL, 13H
+	INT 10H
+	;THIS LOOP WILL CONTINUE AGAIN AND AGAIN FOR CHANGING BACKGROUND 
+	L01:
+		MOV AH, 06H
+		MOV AL, 0
+		MOV BH, 14H
+		MOV CX,0
+		MOV DX, 6200
+		INT 10H
+	L0:
+		MOV BX, TEMP
+		MOV S1, BX	
+		MOV BX, 0
+	L1:
+		MOV AH, 0CH
+		MOV AL, 7
+		MOV CX, S1
+		MOV DX, S2
+		INT 10H
+		INC S1
+		INC BX
+		CMP BX, 50
+		JE L2
+		JNE L1
+	L2:
+		INC S2
+		CMP S2, 50
+		JE L3
+		JNE L0
+	L3:
+		MOV S2, 20
+		MOV AH, 01H
+		INT 16H
+		JZ L0
+		JNZ L9
+
+	L9:
+	MOV AH, 00H
+	INT 16H
+	CMP AL, 27
+	JE EXIT
+	;FOR THE MOVEMENT TOWARDS LEFT
+	CMP AH, 4BH
+	JE LEFT
+	CMP AH, 48H
+	JE UP
+	CMP AH, 50H
+	JE DOWN
+	;FOR THE MOVEMENT TOWARDS RIGHT
+	CMP AH, 4DH
+	JE RIGHT
+	JMP L0
+	LEFT:
+	DEC TEMP
+	JMP L01
+	RIGHT:
+	INC TEMP
+	JMP L01
+	UP:
+		DEC TEMP
+		JMP L01
+	DOWN::
+		INC TEMP
+		JMP L01
+;QUESTION 04 : ON KEY PRESS, ONLY THE TILES HAVING FIRST LETTERS OF YOUR NAME SHOULD TURN RED. ALL OTHER TILES SHOULD STAY SAME.
+TEMP DB 5
+JMP START
+PRINTPIX PROC
+MOV AL, 4		;ENTER COLOR TO CHANGE THE BOXES I DID'NT TAKE INPUT NUMBER  FROM USER
+MOV AH,0CH
+INT 10H
+RET
+PRINTPIX ENDP
+PRINTPIX1 PROC
+MOV AL,0010B 
+MOV AH,0CH
+INT 10H
+RET
+PRINTPIX1 ENDP
+PRINTPIX2 PROC
+MOV AL,0100B 
+MOV AH,0CH
+INT 10H
+RET
+PRINTPIX2 ENDP
+START:
+	MOV AH,0
+	MOV AL,13
+	INT 10H
+	MOV CX,00
+	MOV DX,30
+	MOV AL, TEMP   ; ENTERING COLOR TO CHANEG THE COLOR OF BOX INSIDE THE BOX
+	DEC TEMP
+	MOV AH,0CH
+	INT 10H
+	MOV BL,30
+L1:
+ L2:
+	MOV AX,CX
+	DIV BL
+	CMP AH,0
+	JNE LOO
+	CALL PRINTPIX1
+	JMP LOO1
+ LOO:
+	CALL PRINTPIX
+ LOO1:
+	INC CX 
+	CMP CX,120
+	JBE L2   
+	INC DX
+	MOV CX,0
+	CMP DX,60
+	JBE L1 
+	MOV AH, 2
+	MOV DH, 5     ;ROW
+	MOV DL, 1     ;COLUMN
+	INT 10H
+	MOV AL,'A'    ;ASCII CODE OF CHARACTER 
+	MOV BX,0
+	MOV BL,TEMP   ;GREEN COLOR
+	MOV CX,1     ;REPETITION COUNT
+	MOV AH,09H
+	INT 10H
+	INC TEMP
+	MOV AH, 2
+	MOV DH, 5     ;ROW
+	MOV DL, 5     ;COLUMN
+	INT 10H
+	MOV AL,'Z'    ;ASCII CODE OF CHARACTER 
+	MOV BX,0
+	MOV BL,TEMP   ;GREEN COLOR
+	MOV CX,1     ;REPETITION COUNT
+	MOV AH,09H
+	INT 10H
+	MOV AH, 2
+	MOV DH, 5     ;ROW
+	MOV DL, 9     ;COLUMN
+	INT 10H
+	INC TEMP
+	MOV AL,'N'    ;ASCII CODE OF CHARACTER 
+	MOV BX,0
+	MOV BL,TEMP   ;GREEN COLOR
+	MOV CX,1     ;REPETITION COUNT
+	MOV AH,09H
+	INT 10H
+	MOV AH, 2
+	MOV DH, 5     ;ROW
+	MOV DL, 13     ;COLUMN
+	INT 10H
+	INC TEMP
+	MOV AL,'J'    ;ASCII CODE OF CHARACTER 
+	MOV BX,0
+	MOV BL,TEMP   ;COLOR
+	MOV CX,1     ;REPETITION COUNT
+	MOV AH,09H
+	INT 10H
+LA1:
+	MOV AH,0
+	INT 16H
+	CMP AH,49
+	JE CHANGERED 
+	JNE LA1
+CHANGERED:
+	MOV CX, 61
+	MOV DX,30
+LOOP1:
+ LOOP2:
+	CALL PRINTPIX2
+	INC CX
+	CMP CX,89
+	JBE LOOP2   
+	INC DX
+	MOV CX,61
+	CMP DX,60
+	JBE LOOP1 
+	MOV AH, 2
+	MOV DH, 5     ;ROW
+	MOV DL, 9     ;COLUMN
+	INT 10H
+	INC TEMP
+	MOV AL,'N'    ;ASCII CODE OF CHARACTER 
+	MOV BX,0
+	MOV BL,TEMP   ;ENTER THE COLOR I DID'NT TAKE INPUT FROM USER
+	MOV CX,1     ;REPETITION COUNT
+	MOV AH,09H
+	INT 10H
+
+;-----------------------------LAB-12------------------------------
+
+;QUESTION 01: DRAW THE OUTLINE OF THE FOLLOWING SHAPES ON SCREEN:
+
+;PART A
+
+S1 DW 50    
+S2 DW 50
+MOV BX,0
+MOV AX,0
+MOV AL,13H  ;LOAD GRAPHICS
+INT 10H
+JMP START
+BACKGROUND_COLOR PROC
+MOV AX,0
+MOV BX,0
+MOV CX,0
+MOV DX,0
+MOV AH,07H  ;BACKGROUND COLOR
+MOV AL,0
+MOV CX,0
+MOV DX,100000
+MOV BH,8H
+INT 10H
+RET
+BACKGROUND_COLOR ENDP
+START:
+MAIN PROC
+CALL BACKGROUND_COLOR
+MOV AX,0
+MOV BX,0
+MOV CX,0
+MOV DX,0
+L1:
+MOV AH,0CH
+MOV AL,1H ; COLOUR
+MOV CX,S1 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+INC S1    ;PRINT LINE
+INC S2
+INC BX
+CMP BX,40 ;SIZE OF LINE
+JE L3
+JNE L1
+L3:
+MOV BX, 0
+L2:
+MOV AH,0CH
+MOV AL,1H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+;DEC S1    ;PRINT LINE
+DEC S2
+INC BX
+CMP BX,80 ;SIZE OF LINE
+JE L4
+JNE L2
+L4:
+MOV BX, 0
+L5:
+MOV AH,0CH
+MOV AL,1H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+DEC S1    ;PRINT LINE
+INC S2
+INC BX
+CMP BX,40 ;SIZE OF LINE
+JE EXIT
+JNE L5
+MAIN ENDP
+EXIT:
+MOV AH,4CH
+INT 21H
+END
+
+;PART :B
+S1 DW 50    
+S2 DW 50
+MOV BX,0
+MOV AX,0
+MOV AL,13H  ;LOAD GRAPHICS
+INT 10H
+JMP START
+BACKGROUND_COLOR PROC
+MOV AX,0
+MOV BX,0
+MOV CX,0
+MOV DX,0
+MOV AH,08H  ;BACKGROUND COLOR
+MOV AL,0
+MOV CX,0
+MOV DX,100000
+MOV BH,8H
+INT 10H
+RET
+BACKGROUND_COLOR ENDP
+START:
+MAIN PROC
+CALL BACKGROUND_COLOR
+MOV AX,0
+MOV BX,0
+MOV CX,0
+MOV DX,0
+L1:
+MOV AH,0CH
+MOV AL,10H ; COLOUR
+MOV CX,S1 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+INC S2
+INC BX
+CMP BX,40 ;SIZE OF LINE
+JE L3
+JNE L1
+L3:
+MOV BX, 0
+L2:
+MOV AH,0CH
+MOV AL,5H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+DEC S1    ;PRINT LINE
+INC BX
+CMP BX,40 ;SIZE OF LINE
+JE L4
+JNE L2
+L4:
+MOV BX, 0
+L5:
+MOV AH,0CH
+MOV AL,1H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+DEC S2    ;PRINT LINE
+INC BX
+CMP BX,40 ;SIZE OF LINE
+JE L6
+JNE L5
+L6:
+MOV BX,0
+L7:
+MOV AH,0CH
+MOV AL,1H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+INC S1    ;PRINT LINE
+INC BX
+CMP BX,40 ;SIZE OF LINE
+JE L8
+JNE L7
+L8:
+MOV BX,0
+L9:
+MOV AH,0CH
+MOV AL,1H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+INC S2    ;PRINT LINE
+INC BX
+CMP BX,40 ;SIZE OF LINE
+JE EXIT
+JNE L9
+MAIN ENDP
+EXIT:
+MOV AH,4CH
+INT 21H
+END
+
+;PART C:
+S1 DW 60
+S2 DW 30
+FLUSH_REGISTERS PROC
+	MOV AX,0
+	MOV BX,0
+	MOV CX,0
+	MOV DX,0
+	RET
+	FLUSH_REGISTERS ENDP
+MOV BX,0
+MOV AX,0
+MOV AL,13H  ;LOAD GRAPHICS
+INT 10H
+JMP START
+BACKGROUND_COLOR PROC
+MOV AH,06H   ;BACKGROUND COLOR
+MOV AL,0
+MOV CX,0
+MOV DX,100000
+MOV BH,8H
+INT 10H
+RET
+BACKGROUND_COLOR ENDP
+START:
+MAIN PROC
+CALL BACKGROUND_COLOR
+CALL FLUSH_REGISTERS
+L1:
+MOV AH,0CH
+MOV AL,10H ; COLOUR
+MOV CX,S1 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+INC S2
+INC BX
+CMP BX,80 ;SIZE OF LINE
+JE L3
+JNE L1
+L3:
+MOV BX, 0
+L2:
+MOV AH,0CH
+MOV AL,5H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+DEC S1    ;PRINT LINE
+INC BX
+CMP BX,40 ;SIZE OF LINE
+JE L4
+JNE L2
+L4:
+MOV BX, 0
+L5:
+MOV AH,0CH
+MOV AL,1H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+DEC S2    ;PRINT LINE
+INC BX
+CMP BX,80 ;SIZE OF LINE
+JE L6
+JNE L5
+L6:
+MOV BX,0
+L7:
+MOV AH,0CH
+MOV AL,1H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+INC S1    ;PRINT LINE
+INC BX
+CMP BX,40 ;SIZE OF LINE
+JE L8
+JNE L7
+L8:
+MOV BX,0
+L9:
+MOV AH,0CH
+MOV AL,2H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+INC S2    ;PRINT LINE
+INC BX
+CMP BX,80 ;SIZE OF LINE
+JE EXIT
+JNE L9
+MAIN ENDP
+EXIT:
+MOV AH,4CH
+INT 21H
+END
+
+;QUESTION 02 DRAW A SQUARE/ RECTANGLE FULL OF PIXELS ON SCREEN.:
+
+S1 DW 50    
+S2 DW 50
+PIXEL DW 40
+MOV BX,0
+MOV AX,0
+MOV AL,13H  ;LOAD GRAPHICS
+INT 10H
+JMP START
+BACKGROUND_COLOR PROC
+MOV AX,0
+MOV BX,0
+MOV CX,0
+MOV DX,0
+MOV AH,08H  ;BACKGROUND COLOR
+MOV AL,0
+MOV CX,0
+MOV DX,100000
+MOV BH,8H
+INT 10H
+RET
+BACKGROUND_COLOR ENDP
+START:
+MAIN PROC
+CALL BACKGROUND_COLOR
+MOV AX,0
+MOV BX,0
+MOV CX,0
+MOV DX,0
+L1:
+MOV AH,0CH
+MOV AL,10H ; COLOUR
+MOV CX,S1 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+;INC S1    ;PRINT LINE
+INC S2
+INC BX
+CMP BX,PIXEL ;SIZE OF LINE
+JE L3
+JNE L1
+L3:
+MOV BX, 0
+L2:
+MOV AH,0CH
+MOV AL,5H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+DEC S1    ;PRINT LINE
+;DEC S2
+INC BX
+CMP BX,PIXEL ;SIZE OF LINE
+JE L4
+JNE L2
+L4:
+MOV BX, 0
+L5:
+MOV AH,0CH
+MOV AL,1H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+DEC S2    ;PRINT LINE
+INC BX
+CMP BX,PIXEL ;SIZE OF LINE
+JE L6
+JNE L5
+L6:
+MOV BX,0
+L7:
+MOV AH,0CH
+MOV AL,1H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+INC S1    ;PRINT LINE
+INC BX
+CMP BX,PIXEL ;SIZE OF LINE
+JE L8
+JNE L7
+L8:
+MOV BX,0
+L9:
+MOV AH,0CH
+MOV AL,1H ; COLOUR
+MOV CX,S2 ; X-AXIS
+MOV DX,S1 ; Y-AXIS
+INT 10H
+INC S2    ;PRINT LINE
+INC BX
+CMP BX,PIXEL ;SIZE OF LINE
+JNE L9
+DEC PIXEL
+CMP PIXEL, 0
+JNE L1
+MAIN ENDP
+EXIT:
+MOV AH,4CH
+INT 21H
+END
+
+;QUESTION 03: DRAW A BORDER ON THE SCREEN AND WRITE YOUR NAME IN THE CENTER OF THE SCREEN.
+X1 DW 0
+Y1 DW 0
+STRING DB "ABUBAKER AJAZ AHMED",'$'
+STRING3 DB "______",'$'
+MOV AH ,00H
+MOV AL,13H
+INT 10H
+MOV BX ,0
+L1:
+MOV AH,0CH
+MOV AL,4H
+MOV CX,X1
+MOV DX,Y1
+INT 10H
+INC X1
+INC BX
+CMP BX,319
+JNE L1
+MOV BX,0
+L2:
+MOV AH,0CH
+MOV AL,4H
+MOV CX,X1
+MOV DX,Y1
+INT 10H
+INC Y1
+INC BX
+CMP BX,199
+JNE L2
+MOV BX,0
+L3:
+MOV AH,0CH
+MOV AL,4H
+MOV CX,X1
+MOV DX,Y1
+INT 10H
+DEC X1
+INC BX
+CMP BX,319
+JNE L3
+MOV BX,0
+L4:
+MOV AH,0CH
+MOV AL,4H
+MOV CX,X1
+MOV DX,Y1
+INT 10H
+DEC Y1
+INC BX
+CMP BX,199
+JNE L4
+MOV AH ,02H
+MOV BX, 0
+MOV DH ,12
+MOV DL ,15
+INT 10H
+LEA DX,STRING
+MOV AH,9H
+INT 21H
+MOV AH ,02H
+MOV BX, 0
+MOV DH ,13
+MOV DL ,15
+INT 10H
+LEA DX,STRING3
+MOV AH,9H
+INT 21H
+MOV AH ,02H
+MOV BX, 0
+MOV DH ,11
+MOV DL ,20
+INT 10H
+MOV AH ,02H
+MOV BX, 0
+MOV DH ,11
+MOV DL ,23
+INT 10H
+MOV AH,4CH
+INT 21H
+END
+
+;QUESTION 04 : 	DRAW A CHESS BOARD ON THE SCREEN.
+
+
+S1 DW 50    
+S2 DW 50
+PIXEL DW 40
+
+MOV BX,0
+MOV AX,0
+MOV AL,13H  ;LOAD GRAPHICS
+INT 10H
+JMP START
+BACKGROUND_COLOR PROC
+MOV AX,0
+MOV BX,0
+MOV CX,0
+MOV DX,0
+MOV AH,07H  ;BACKGROUND COLOR
+MOV AL,0
+MOV CX,0
+MOV DX,100000
+MOV BH,8H
+INT 10H
+RET
+BACKGROUND_COLOR ENDP
+START:
+MAIN PROC
+CALL BACKGROUND_COLOR
+MOV AX,0
+MOV BX,0
+MOV CX,0
+MOV DX,0
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 0     ;TOP ROW OF WINDOW
+MOV CL, 0     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 5     ;BOTTOM ROW OF WINDOW
+MOV DL, 5     ;RIGHT MOST COLUMN OF WINDOW
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 0     ;TOP ROW OF WINDOW
+MOV CL, 12     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 5     ;BOTTOM ROW OF WINDOW
+MOV DL, 17     ;RIGHT MOST COLUMN OF WINDOW
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 0     ;TOP ROW OF WINDOW
+MOV CL, 24     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 5     ;BOTTOM ROW OF WINDOW
+MOV DL, 29
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 0     ;TOP ROW OF WINDOW
+MOV CL, 36     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 5     ;BOTTOM ROW OF WINDOW
+MOV DL, 41
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 6     ;TOP ROW OF WINDOW
+MOV CL, 6     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 11     ;BOTTOM ROW OF WINDOW
+MOV DL, 11     ;RIGHT MOST COLUMN OF WINDOW
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 6     ;TOP ROW OF WINDOW
+MOV CL, 18     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 11     ;BOTTOM ROW OF WINDOW
+MOV DL, 23     ;RIGHT MOST COLUMN OF WINDOW
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 6     ;TOP ROW OF WINDOW
+MOV CL, 30     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 11     ;BOTTOM ROW OF WINDOW
+MOV DL, 35     ;RIGHT MOST COLUMN OF WINDOW
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 12     ;TOP ROW OF WINDOW
+MOV CL, 0     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 17     ;BOTTOM ROW OF WINDOW
+MOV DL, 5     ;RIGHT MOST COLUMN OF WINDOW
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 12     ;TOP ROW OF WINDOW
+MOV CL, 12     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 17     ;BOTTOM ROW OF WINDOW
+MOV DL, 17     ;RIGHT MOST COLUMN OF WINDOW
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 12     ;TOP ROW OF WINDOW
+MOV CL, 24     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 17     ;BOTTOM ROW OF WINDOW
+MOV DL, 29
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 12     ;TOP ROW OF WINDOW
+MOV CL, 36     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 17     ;BOTTOM ROW OF WINDOW
+MOV DL, 41
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 18     ;TOP ROW OF WINDOW
+MOV CL, 6     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 23     ;BOTTOM ROW OF WINDOW
+MOV DL, 11     ;RIGHT MOST COLUMN OF WINDOW
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 18     ;TOP ROW OF WINDOW
+MOV CL, 18     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 23     ;BOTTOM ROW OF WINDOW
+MOV DL, 23     ;RIGHT MOST COLUMN OF WINDOW
+INT 10H
+MOV AH, 6
+MOV AL, 0
+MOV BH, 12     ;COLOR
+MOV CH, 18     ;TOP ROW OF WINDOW
+MOV CL, 30     ;LEFT MOST COLUMN OF WINDOW
+MOV DH, 23     ;BOTTOM ROW OF WINDOW
+MOV DL, 35     ;RIGHT MOST COLUMN OF WINDOW
+INT 10H
+MAIN ENDP
+EXIT:
+MOV AH,4CH
+INT 21H
+END
+
+;//------------------------LAB 11--------------------------//
+
+;MULTIPLICATION OF A NUMBER ALGORITHM 
+
+;QUESTION 01
+
+.MODEL SMALL
+.STACK 010H
+.DATA
+	MULTIPLIER DB 5
+	MULTIPLICAND DB 13
+	RESULT DB 0
+.CODE 
+	MOV AX,@DATA
+	MOV DS,AX
+	MOV AX,0
+	MOV AL,MULTIPLIER
+	MOV BL,MULTIPLICAND
+	MOV CX,4
+	
+	L1:
+		SHR AL,1
+		JNC SHIFTONLY
+		
+		ADD RESULT,BL		
+	SHIFTONLY:
+		SHL BL,1	
+	LOOP L1 
+	
+	
+MOV AH,04CH
+INT 021H
+
+END
+
+
+;-----------------------------------STRUCTURES BASICS INITIALZATION----------------------------------
+
+;QUESTION 02
+.MODEL SMALL
+.STACK 010H
+
+EMP STRUCT 
+	ID DB "123456789"
+	EMP_NAME DB 'A','B','C','D','E'
+	YEAR DW 02022H
+	ESAL DW 0
+
+EMP ENDS
+
+
+.DATA
+
+  ARRY EMP 10  DUP(<>)
+  VAR EMP <>
+  
+  VAR1 DW 0
+  
+
+.CODE 
+	MOV AX,@DATA
+	MOV DS,AX
+	MOV AX,0
+	
+	MOV AX, SIZEOF ARRY
+	;OUTPUT
+		MOV VAR1,AX
+		MOV AH,02H
+		MOV DX, VAR1
+		ADD DL, '0'
+		INT 21H
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	MOV BX, TYPE ARRY
+		MOV VAR1,BX
+		MOV AH,02H
+		MOV DX, VAR1
+		ADD DL, '0'
+		INT 21H
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	MOV CX, LENGTHOF ARRY
+	
+		MOV VAR1,CX
+		MOV AH,02H
+		MOV DX, VAR1
+		ADD DL, '0'
+		INT 21H
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	MOV AX, 0
+	MOV BX, 0
+	MOV CX, 0
+	
+	MOV AX, SIZEOF VAR
+	;OUTPUT
+		MOV VAR1,AX
+		MOV AH,02H
+		MOV DX, VAR1
+		ADD DL, '0'
+		INT 21H
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	MOV BX, TYPE VAR
+		MOV VAR1,BX
+		MOV AH,02H
+		MOV DX, VAR1
+		ADD DL, '0'
+		INT 21H
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	MOV CX, LENGTHOF VAR
+	
+		MOV VAR1,CX
+		MOV AH,02H
+		MOV DX, VAR1
+		ADD DL, '0'
+		INT 21H
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+
+EXIT:
+
+	MOV AH,04CH
+	INT 021H
+	END
+
+
+;-----------------------------ACCESSING STRUCTURES MEMBERS------------------------------------------------------------------------------------- 
+;QUESTION 02
+.MODEL SMALL
+.STACK 010H
+
+EMP STRUCT 
+
+	HOURS DB 0
+	MINUTES DB 0
+	SECONDS DB 0
+	
+	
+	
+EMP ENDS
+  
+
+.DATA
+	A1 EMP <>
+.CODE 
+MAIN PROC
+
+	MOV AX,@DATA
+	MOV DS,AX
+	MOV AX,0
+	
+	MOV AH, 2CH
+	INT 21H
+	
+	;HOURS
+	MOV A1.HOURS, CH
+	;MINUTES
+	MOV A1.MINUTES,CL
+	;SECONDS
+	MOV A1.SECONDS, DH
+		
+	MOV AH,02H
+	MOV DL, A1.HOURS
+	ADD DL, '0'
+	INT 21H
+	
+	MOV AH,02H
+	MOV DL, ':'
+	ADD DL, '0'
+	INT 21H
+	
+	MOV AH,02H
+	MOV DL, A1.MINUTES
+	ADD DL, '0'
+	INT 21H
+	
+	MOV AH,02H
+	MOV DL, ':'
+	ADD DL, '0'
+	INT 21H
+	
+	MOV AH,02H
+	MOV DL, A1.SECONDS
+	ADD DL, '0'
+	INT 21H
+
+	
+
+EXIT:
+
+	MOV AH,04CH
+	INT 021H
+	MAIN ENDP
+	END MAIN
+	
+
+;---------------------- CALCULATING CURRENT TIME--------------------------------------
+;QUESTION 02
+.MODEL SMALL
+.STACK 010H
+
+EMP STRUCT 
+	
+	ID DB 0
+	BILL DB 0
+	ITEMS DB 0
+	PER DB 0
+	
+
+	
+	
+EMP ENDS
+  
+
+.DATA
+	A1 EMP <>
+.CODE 
+
+	;STATEMENTS FOR LOADING THE DATA 
+	MOV AX, @DATA
+	MOV DS,AX
+	MOV AX, 0
+MAIN PROC
+
+
+	
+	MOV AH,1
+	INT 21H
+	MOV A1.ID, AH
+	
+	MOV AH,1
+	INT 21H
+	MOV A1.BILL , AH
+	
+	MOV AH,1
+	INT 21H
+	MOV A1.ITEMS , AH
+	
+	MOV AH,1
+	INT 21H
+	MOV A1.PER , AH
+		
+	
+
+EXIT:
+
+	MOV AH,04CH
+	INT 021H
+	MAIN ENDP
+	END MAIN
+	
+
+;------------------------------LAB-10---------------------------------------------------------------------------------
+
+
+;---------------------------------------- BINARY SHIFTS RIGHT AND LEFT ---------------------------------------------------
+
+.MODEL STACK
+.STACK 100H
+               
+               
+.DATA
+               
+               
+
+.CODE
+	MOV AX, @DATA
+	MOV DS,AX
+	MOV AX, 0  
+   MOV AL ,181  ; 10110101
+   SHR AL ,1    ; 01011010       90
+   MOV BL ,181  ; 10110101
+   SAR BL ,1    ; 11011010       218
+   
+   MOV AH ,181 ; 10110101
+   SHL AH ,1   ; 01101010        106
+   MOV AH ,181 ; 10110101
+   SAL BL ,1   ; 10110100        ;B4  180
+   
+ 
+ 	MOV AH , 4CH
+	INT 21H
+	END
+	  
+
+;------------------------------CALCULATOR----------------------------------------
+
+.MODEL SMALL
+.STACK 100H
+.DATA
+MSG1 DB 'FOR ADD TYPE   :'1'$'
+MSG2 DB 10,13,'FOR SUB TYPE   :'2'$'
+MSG3 DB 10,13,'FOR MUL TYPE   :'3'$'
+MSG4 DB 10,13,'FOR DIV TYPE   :'4'$'
+MSG5 DB 10,13,'CHOOSE ANY ONE:$'
+MSG6 DB 10,13,10,13,'ENTER 1ST NUMBER:$'
+MSG7 DB 10,13,'ENTER 2ND NUMBER:$'
+MSG8 DB 10,13,10,13,'THE RESULT IS:$'  
+
+                           
+
+NUM1 DB ?
+NUM2 DB ?
+RESULT DB ?
+.CODE
+MAIN PROC
+    MOV AX,@DATA
+    MOV DS,AX    
+    MOV AX,0   
+    
+
+    
+    LEA DX,MSG1
+    MOV AH,9
+    INT 21H
+    
+    LEA DX,MSG2
+    MOV AH,9
+    INT 21H
+    
+    LEA DX,MSG3
+    MOV AH,9
+    INT 21H
+    
+    LEA DX,MSG4
+    MOV AH,9
+    INT 21H 
+    
+    
+    
+    LEA DX,MSG5
+    MOV AH,9
+    INT 21H
+    
+  
+    MOV AH,1
+    INT 21H
+    MOV BH,AL
+    SUB BH,48
+    
+    CMP BH,1
+    JE ADD
+    
+    CMP BH,2
+    JE SUB
+     
+    CMP BH,3
+    JE MUL
+    
+    CMP BH,4
+    JE DIV
+    
+    
+    
+    
+  ADD:
+    LEA DX,MSG6  ;ENTER 1ST NUMBER
+    MOV AH,9
+    INT 21H 
+    
+    MOV AH,1
+    INT 21H
+    MOV BL,AL
+    
+    LEA DX,MSG7    ;ENTER 2ND NUMBER
+    MOV AH,9
+    INT 21H 
+    
+    
+    
+    MOV AH,1
+    INT 21H
+    MOV CL,AL
+    
+    ADD AL,BL
+    MOV AH,0
+    AAA
+    
+    
+    MOV BX,AX 
+    ADD BH,48
+    ADD BL,48 
+    
+ 
+    
+    LEA DX,MSG8
+    MOV AH,9
+    INT 21H
+    
+    
+    MOV AH,2
+    MOV DL,BH
+    INT 21H
+    
+    MOV AH,2
+    MOV DL,BL
+    INT 21H
+    
+
+     
+    
+   SUB:
+ 
+    LEA DX,MSG6  ;ENTER 1ST NUMBER
+    MOV AH,9
+    INT 21H 
+    
+    MOV AH,1
+    INT 21H
+    MOV BL,AL
+    
+    LEA DX,MSG7    ;ENTER 2ND NUMBER
+    MOV AH,9
+    INT 21H 
+    
+    
+    
+    MOV AH,1
+    INT 21H
+    MOV CL,AL
+    
+    SUB BL,CL
+    ADD BL,48
+    
+    
+    
+    
+    LEA DX,MSG8
+    MOV AH,9
+    INT 21H
+    
+    
+    MOV AH,2
+    MOV DL,BL
+    INT 21H
+
+    
+    
+   MUL:
+ 
+    LEA DX,MSG6
+    MOV AH,9
+    INT 21H
+    
+    
+    MOV AH,1
+    INT 21H
+    SUB AL,30H
+    MOV NUM1,AL
+    
+    
+    LEA DX,MSG7
+    MOV AH,9
+    INT 21H 
+    
+    
+    MOV AH,1
+    INT 21H
+    SUB AL,30H
+    MOV NUM2,AL
+    
+    
+    MUL NUM1
+    MOV RESULT,AL
+    AAM  
+    
+    
+    ADD AH,30H
+    ADD AL,30H
+    
+    
+    MOV BX,AX 
+    
+    
+    LEA DX,MSG8
+    MOV AH,9
+    INT 21H 
+    
+    MOV AH,2
+    MOV DL,BH
+    INT 21H
+    
+    MOV AH,2
+    MOV DL,BL
+    INT 21H
+    
+
+   
+   DIV:
+    LEA DX,MSG6
+    MOV AH,9
+    INT 21H
+    
+    
+    MOV AH,1
+    INT 21H
+    SUB AL,30H
+    MOV NUM1,AL
+    
+    
+    LEA DX,MSG7
+    MOV AH,9
+    INT 21H 
+    
+    
+    MOV AH,1
+    INT 21H
+    SUB AL,30H
+    MOV NUM2,AL
+    
+    MOV CL,NUM1
+    MOV CH,00
+    MOV AX,CX  
+    
+    DIV NUM2
+    MOV RESULT,AL
+    MOV AH, 00
+    AAD  
+    
+    
+    ADD AH,30H
+    ADD AL,30H
+    
+    
+    MOV BX,AX 
+    
+    
+    LEA DX,MSG8
+    MOV AH,9
+    INT 21H 
+    
+    MOV AH,2
+    MOV DL,BH
+    INT 21H
+    
+    MOV AH,2
+    MOV DL,BL
+    INT 21H
+    
+
+    EXIT:
+    
+    MOV AH,4CH
+    INT 21H 
+   
+    MAIN ENDP
+END MAIN
+         
+      
+	 
+;------------------ USE-OF MACROS-------------------
+
+.MODEL STACK
+.STACK 100H
+               
+               
+.DATA
+     
+     
+     CHAR DB 'A' 
+     NUMBER DW 5  
+               
+
+.CODE
+    MOV AX, @DATA
+	MOV DS,AX
+	MOV AX, 0  
+    
+                
+   
+   
+   MYMACRO MACRO CHAR,NUMBER        
+                
+    MOV CX,NUMBER
+    L1:
+        MOV DL, CHAR
+        MOV AH, 2
+        INT 21H     
+        INC CHAR
+    LOOP L1
+  
+  
+   ENDM
+   
+   
+   MYMACRO CHAR,NUMBER
+
+
+    EXIT:
+ 	MOV AH , 4CH
+	INT 21H
+	END
+	  
+;---------------------------------USE-OF-MACRO-----------------------------
+.MODEL STACK
+.STACK 100H
+               
+               
+.DATA
+     
+    ARR DB 5,2,3,4,5
+    INDEX DW 1
+    NUMBER DB 2
+    MSSG1 DB "TRUE$"
+    MSSG2 DB "FALSE"
+
+.CODE
+   
+   
+
+	;STATEMENTS FOR LOADING THE DATA 
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0   
+	
+	
+	 MAIN PROC
+	
+	                   
+	                   
+	MYMACRO MACRO NUMBER                 
+	
+	
+	MOV SI,OFFSET ARR  
+    MOV SI, INDEX
+    MOV AL,[SI]
+    
+    CMP AL,NUMBER
+    JE L1
+    JNE L2  
+    
+    
+	ENDM
+	
+	MYMACRO NUMBER,INDEX
+    
+ 
+    
+    L1:
+        ;STRING OUTPUT
+        LEA DX, MSSG1
+        MOV AH, 09H
+        INT 21H
+        JMP EXIT
+    L2:
+        ;STRING OUTPUT
+        LEA DX, MSSG2
+        MOV AH, 09H
+        INT 21H    
+        JMP EXIT
+        
+        
+    EXIT:
+        MOV AH , 4CH
+        INT 21H 
+        ENDP
+        END
+                             
+                             
+
+;------------------------------------FINDING TRIANGLE-------------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+;QUESTION 1
+
+.DATA    
+X DB 0   
+Y DB 0
+Z DB 0  
+EQUA  DB 'EQUILATERAL TRIANGLE','$'
+EQUA1 DB 'ISOSCELES TRIANLGE','$'
+EQUA2 DB 'SCALENE TRIANLGE','$'
+.CODE
+
+	;STATEMENTS FOR LOADING THE DATA 
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+	
+	MOV AH,1H
+	INT 21H   
+	SUB AL,30H
+	MOV X, AL 
+	MOV AX,0    
+	             
+    MOV AH,1H
+	INT 21H   
+	SUB AL,30H
+	MOV Y, AL   
+	MOV AX, 0  
+	
+	MOV AH,1H
+	INT 21H    
+	SUB AL,30H
+	MOV Z, AL 
+	
+	  
+	  
+    MOV AL,X
+    CMP AL,Y
+    JE L1  
+    JNE L3
+                    
+                    
+   L2:
+     ;STRING OUTPUT
+      LEA DX, EQUA2
+      MOV AH, 09H
+      INT 21H 
+      JMP EXIT
+    
+           
+           
+    L3:
+        CMP AL,Z   
+        JNE L2
+        
+    
+    L1:
+        CMP AL, Z
+        JE EQUALPRINT 
+        JNE ISOPRINT 
+        
+        
+        
+        
+        
+   
+   ISOPRINT:
+        ;STRING OUTPUT
+        LEA DX, EQUA1
+        MOV AH, 09H
+        INT 21H
+        JMP EXIT
+        
+   
+   
+   EQUALPRINT: 
+        ;STRING OUTPUT
+        LEA DX, EQUA
+        MOV AH, 09H
+        INT 21H
+        JMP EXIT
+    
+    
+    
+    
+	
+	EXIT:
+	;ENDING CODE
+	MOV AH, 4CH
+	INT 21H
+	END
+		
+
+		
+END      
+
+;X = INT(INPUT("X: "))
+;Y = INT(INPUT("Y: "))
+;Z = INT(INPUT("Z: "))
+
+;IF X == Y == Z:
+	;PRINT("EQUILATERAL TRIANGLE")
+;ELIF X==Y OR Y==Z OR Z==X:
+	;PRINT("ISOSCELES TRIANGLE")
+;ELSE:
+	;PRINT("SCALENE TRIANGLE")
+	
+	
+;--------------------------------PRINTING-PYRAMID!--------------------------
+
+.MODEL SMALL
+.STACK 100H
+.DATA
+STAR DB 0
+BLANK DB 0
+.CODE 
+MAIN PROC
+    MOV CX,5
+   MOV BX,1
+    
+   L1:
+    PUSH CX
+   L2:
+    MOV AH,2
+    MOV DL,32
+    INT 21H
+    LOOP L2
+    
+    
+    MOV CX,BX
+   L3:
+    MOV AH,2
+    MOV DL,'*'
+    INT 21H
+    LOOP L3
+    
+    MOV AH,2
+    MOV DL,10
+    INT 21H
+    MOV DL,13
+    INT 21H
+    
+    INC BX
+    INC BX
+    
+    POP CX
+    LOOP L1
+
+    MOV CX,4
+    MOV BH,7
+    MOV BL,2
+    
+    MOV STAR,BH
+    MOV BLANK,BL
+    
+   L4:
+    CMP BLANK,0
+    JE L5
+    MOV AH,2
+    MOV DL,32
+    INT 21H
+    DEC BLANK
+
+    JMP L4
+    
+   L5:
+    MOV AH,2
+    MOV DL,'*'
+    INT 21H
+    DEC STAR
+    CMP STAR,0
+    JNE L5
+  L6:  
+    MOV AH,2
+    MOV DL,10
+    INT 21H
+    MOV DL,13
+    INT 21H
+    
+    DEC BH
+    DEC BH
+    MOV STAR,BH
+    
+    INC BL
+    MOV BLANK,BL
+    
+    LOOP L4
+
+    
+    EXIT:
+    MOV AH,4CH
+    INT 21H
+    MAIN ENDP
+END MAIN
+;-------------------------------FINDING LARGEST IN THE ARRAY OR FINDING INDEX OF LARGEST ELEMENT!----------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+
+.DATA
+
+   ARRY DB 1,2,3,6, 7
+   LARGEST DW 0 
+   INDEX DW 0    
+   C1 DW 0
+
+.CODE
+
+ 	MOV AX, @DATA
+	MOV DS,AX
+	MOV AX, 0  
+	MOV SI, OFFSET ARRY
+	MOV AX,LARGEST 
+	MOV BX,0
+	L1:         
+	    
+	    CMP [SI],AX 
+	    JG L2  
+	   
+	    CMP BX,5
+	    JE EXIT  
+	    INC SI
+	    INC SI 
+	    MOV AX, [SI]
+	    DEC SI
+	    INC BX
+	    LOOP L1 
+	    JMP EXIT
+	    
+	    
+	L2:
+	    
+	    INC SI  
+	    MOV AX, [SI] 
+	    DEC SI
+	    INC BX  
+	    CMP BX,5
+	    JE EXIT
+	    JMP L1
+
+   
+    EXIT:   
+    MOV SI, OFFSET ARRY
+    MOV CX, 5  
+    
+    L7:  
+    CMP [SI], AX
+    JE P1
+    INC SI
+    INC C1
+    LOOP L7  
+    P1:
+        MOV INDEX,AX     
+        MOV AH,02H
+	    MOV DX, C1
+	    ADD DL, '0'
+	    INT 21H
+    	;ENDING CODE
+	    MOV AH, 4CH
+	    INT 21H
+	    END    	
+	
+	
+	 ;  INT LARGEST, POS;
+  ; LARGEST = A[0];
+  ; FOR(I=1; I<5; I++) {
+   ;   IF(A[I]>LARGEST) {
+    ;     LARGEST = A[I];
+     ;    POS = I;
+     ; }
+   ;}
+  ; COUT<<"THE LARGEST ELEMENT IN THE ARRAY IS "<<LARGEST<<" AND IT IS AT INDEX "<<POS;
+  ; RETRN 0;
+  
+  
+  ;--------------------------------------------------INPUT AND OUTPUT THE ARRAY---------------------------------------------------------------
+	
+.MODEL SMALL
+.STACK 100H
+
+;QUESTION 3
+
+.DATA
+
+	  ARR DW 10 DUP(?) 
+
+	
+.CODE
+
+	;STATEMENTS FOR LOADING THE DATA 
+	MOV AX, @DATA
+	MOV DX, AX
+	MOV AX, 0
+	
+	MOV CX, 10
+	MOV SI, OFFSET ARR
+	
+	INN:
+		MOV AH,1
+		INT 21H
+		
+		MOV [SI],AL
+		INC SI
+	LOOP INN
+		
+	MOV AH,2
+	MOV DL,10
+	INT 21H
+	
+	MOV DL, 13
+	INT 21H
+	
+	MOV SI, OFFSET ARR
+	MOV CX , 10
+	
+	OUTSS:
+	MOV DL, [SI]
+	MOV AH,2
+	INT 21H
+	INC SI
+	
+	LOOP OUTSS
+	
+	MOV AH , 4CH
+	INT 21H
+	END
+	
+		
+;-----------------------------PRINTING PATTERN----------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+;QUESTION 7 PART 1
+
+.DATA
+
+	
+	MSSG DB "*$"
+	
+
+	
+.CODE
+
+	;STATEMENTS FOR LOADING THE DATA 
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+	
+	MOV CX , 4
+	L1:
+	PUSH CX
+	MOV CX, 4
+		;NEWLINE
+		MOV AH, 02H
+		MOV DL, 10 ; ASCII OF ENTER
+		INT 21H
+		
+		L2:
+			MOV AH, 02H
+			MOV DL, '*' ; ASCII OF ENTER
+			INT 21H
+			LOOP L2
+	POP CX
+	LOOP L1
+	
+	MOV AH , 4CH
+	INT 21H
+	END
+	
+	
+	;	FOR (INT I = 0; I < 4; I++) {
+	;	FOR (INT J = 0; J < 5; J++) {
+	;		COUT << "*";
+	;	}
+	;	COUT << ENDL;
+	;}
+	
+
+;-----------------------PRINITNG-PATTERN------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+;QUESTION 5
+
+.DATA
+
+	
+	MSSG DB "*$"
+	
+
+	
+.CODE
+
+	;STATEMENTS FOR LOADING THE DATA 
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+	
+	MOV BX , 4
+	MOV CX, 4
+	L1:
+	PUSH CX
+	MOV CX, BX
+	DEC BX
+	
+		;NEWLINE
+		MOV AH, 02H
+		MOV DL, 10 ; ASCII OF ENTER
+		INT 21H
+		
+		L2:
+			MOV AH, 02H
+			MOV DL, '*' ; ASCII OF ENTER
+			INT 21H
+			LOOP L2
+	POP CX
+
+	LOOP L1
+	
+	MOV AH , 4CH
+	INT 21H
+	END
+	
+	
+	;	FOR (INT I = 4; I >0; I--) {
+	;	FOR (INT J = I; J > 0; J--) {
+	;		COUT << "*";
+	;	}
+	;	COUT << ENDL;
+	;}
+
+;====================================================================|ASSIGNMENTS|===============================================================================
+	
+;-------------------------------RANDOM - NUMBER - GENERATION----------------------------------------------------
+.MODEL SMALL
+.STACK 100H
+
+;QUESTION 2
+
+	; GENERATING RANDOM NUMBER FROM 1 TO 8
+.DATA
+
+NUMBER DW 0  
+
+.CODE
+
+	;STATEMENTS FOR LOADING THE DATA 
+	MOV AX, @DATA
+	MOV DS,AX
+	MOV AX, 0
+	;CALLING SYSTEM TIME INTERRUPT 	
+	MOV AH, 00H			
+	; SETTING THE CLOCK TICKS RANDOMLY 
+	INT 1AH				
+	;MOVING THE CLOCK TICKS VALUES THAT WE SET RANDOMLY INTO AX 
+	MOV AX, DX			
+	;MOVING VALUE TO CX TO GENERATE RANDOM NUMBER FROM 1 - 8
+	MOV CX, 8 			
+	;CLEARING DX TO 0 AS WHEN WE DIVIDE THE VALUE VALUE WILL GO INTO DX REGISTER
+	MOV DX, 0			
+	;DIVIDING CX WITH AX WHICH WE MOVES FROM DX TO AX BY SEETING CLOCK TICKS RANDOMLY 
+	DIV CX 			
+	; MOVING THE VALUE WHICH WE RANDOMLY GENERATED FROM DX TO BX
+	MOV BX , DX
+	;MOVING THE VALUE FROM REGISTER TO VARIABLE
+	MOV NUMBER, BX 
+	;ADDING 1 INTO NUMBER BECAUSE I WANT THE RANGE FROM 1 - 8 INSTEAD OF 0 - 7 (MY LOGIC)
+	ADD NUMBER,1
+	;SYNTAX FOR OUTPUT THE NUMBER THAT WE RANDOMLY GENERATED
+	MOV AH,02H
+	MOV DX, NUMBER
+	ADD DL, '0'
+	INT 21H
+	;ENDING CODE
+	MOV AH, 4CH
+	INT 21H
+	END
+
+
+;-----------------------------------------------------------PALINDROME-------------------------------------------------------------------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+;QUESTION 4
+
+
+.DATA
+
+
+STRS DB "SABAS$"
+
+MARIO DB "NOT$"
+MARIO1 DB "YES$"
+
+STRS1 DB "$"
+
+.CODE
+
+	;STATEMENTS FOR LOADING THE DATA 
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+
+
+	MOV DI,4
+	MOV SI,0
+	MOV CX,5	
+	L1:
+		MOV AL ,STRS[SI]
+		CMP AL ,STRS[DI]
+		JNE L2
+		INC SI
+		DEC DI	
+		CMP CX , 0
+		JE L3
+	LOOP L1
+		
+		
+	L3:
+		;STRING OUTPUT
+		LEA DX, MARIO1
+		MOV AH, 09H
+		INT 21H
+		JMP EXIT
+		
+	L2:
+		;STRING OUTPUT
+		LEA DX, MARIO
+		MOV AH, 09H
+		INT 21H
+		JMP EXIT
+		
+	EXIT:
+		MOV AH , 4CH
+		INT 21H
+		END
+		
+
+
+	
+	
+	
+	;FOR(I=0;I < LENGTH ;I++){
+    ;IF(STRING1[I] != STRING1[LENGTH-I-1]){
+    ;     FLAG = 1;
+    ;      BREAK;
+    ;      }
+    ;    }
+    
+		
+	
+;--------------------------------------ADDING TWO ARRAYS IN OPPOSITING INDEXING----------------------------------------------------------------------------------
+.MODEL SMALL
+.STACK 100H
+
+
+;QUESTION 5
+
+.DATA
+
+	ARR1 DB 5 DUP (1,2,3,4,5)
+	ARR2 DB 5 DUP (1,2,3,4,5)
+	RESULT DB 5 DUP(0,0,0,0,0)
+
+	COUNT DW 0
+	COUNT1 DW 0
+.CODE
+	
+	;STATEMENTS FOR LOADING THE DATA 
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+	
+	MOV DI, 5
+	DEC DI
+	MOV CX, 5
+	L1:
+	
+		MOV SI, COUNT1
+		MOV AH,ARR1[SI]
+		INC SI
+		MOV COUNT1,SI
+		
+		MOV BH, ARR2[DI]
+		DEC DI
+		ADD AH,BH
+		
+		MOV SI ,COUNT 
+		MOV RESULT[SI], AH
+		INC SI
+		MOV COUNT, SI
+		
+	LOOP L1
+	
+	MOV SI, OFFSET RESULT
+	MOV CX , 5
+	
+	OUTSS:
+	MOV DL, [SI]
+	MOV AH,2
+	ADD DL, '0'
+	INT 21H
+	INC SI
+	
+	LOOP OUTSS
+	
+	MOV AH , 4CH
+	INT 21H
+	END
+	
+
+;--------------------------CALCULATING ARRAY'S HIGHEST ELEMENT FREQUENCY----------------------------------------
+
+
+.MODEL SMALL 
+.STACK 100H
+.DATA
+ARRAY DB 1,2,2,2,2,4,3,5,2,2,4,3
+SIZEARR = $-ARRAY
+MAX DB 0
+INDE DB 0
+.CODE
+
+MOV AX,@DATA
+MOV DS,AX
+MOV AX,0
+
+MOV DI,OFFSET ARRAY
+MOV CX,SIZEARR
+
+LOOP1:
+    MOV SI,OFFSET ARRAY
+    MOV BL,[DI]
+    MOV DL,CL
+    MOV AX,0
+    MOV CX,SIZEARR
+
+    LOOP2:
+
+        CMP BL,[SI]
+        JE B
+        JMP DONE
+
+    B:
+        INC AL
+
+    DONE:
+        INC SI
+    LOOP LOOP2
+
+        CMP AL,MAX
+        JA COPYING
+        JMP EXIT
+
+    COPYING:
+        MOV MAX,AL	;INDEX
+        MOV AX,0
+        MOV AL,[DI]
+        MOV INDE,AL
+    EXIT:
+        MOV CL,DL
+        INC DI
+LOOP LOOP1
+		
+		MOV AH,02H
+		MOV DL, MAX
+		ADD DL, '0'
+		INT 21H
+		MOV AH,02H
+		MOV DL, INDE	;VALUE
+		ADD DL, '0'
+		
+		INT 21H
+
+MOV AH,4CH
+INT 21H
+END
+
+
+;-------------------------------------------------------- STRING OUTPUT SYNTAX -----------------------------------------------------------------------------------
+
+;NEWLINE
+MOV AH, 02H
+MOV DL, 10 ; ASCII OF ENTER
+INT 21H
+
+
+;STRING OUTPUT
+LEA DX, PHONENUMBER
+MOV AH, 09H
+INT 21H
+
+
+
+;------------------ADDING ARRAY'S INDEX ROWS OR COLUUMNS -ADDING DIAGONAL- LEFT- RIGHT ETC ----------------------------------------------------------------------
+.MODEL SMALL
+.STACK 100H
+
+
+;QUESTION 7 
+
+;PART1
+
+
+
+.DATA
+	ROW DW 1
+	SUM DB 0
+	ARRY DB 1, 2, 3, 4 , 5 ,6 ,7 ,8 ,9
+	;1 2 3 
+	;4 5 6
+	;7 8 9 
+	TEMP DW 0
+	
+
+.CODE
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+	DEC ROW
+	MOV AX,ROW
+	MOV BL,3
+	MUL BL
+	MOV TEMP, AX
+	
+	MOV SI, TEMP
+	MOV CX , 3
+	
+	L1:
+		MOV AL,ARRY[SI]
+		ADD SUM, AL
+		INC SI
+		
+	LOOP L1
+
+	;SYNTAX FOR OUTPUT THE SUM 
+	MOV AH,02H
+	MOV DL, SUM
+	ADD DL, '0'
+	INT 21H
+	;ENDING CODE
+	MOV AH, 4CH
+	INT 21H
+	END	
+	
+	
+;--------------------------------------------------------------------------------------------------------------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+
+;QUESTION 7 
+
+;PART2
+
+
+
+.DATA
+	COL DW 1
+	SUM DW 0
+	ARRY DB 1, 2, 3, 2 , 5 ,6 ,3 ,8 ,9
+	;1 2 3 
+	;4 5 6
+	;7 8 9 
+	
+	
+
+.CODE
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+
+	DEC COL
+	MOV SI, COL
+	MOV CX , 3
+	
+	L1:
+		MOV AL, ARRY[SI]
+		ADD SUM, AX
+		ADD SI,3
+		
+	LOOP L1
+	
+	;SYNTAX FOR OUTPUT THE SUM 
+	MOV AH,02H
+	MOV DX, SUM
+	ADD DL, '0'
+	INT 21H
+	;ENDING CODE
+	MOV AH, 4CH
+	INT 21H
+	END	S
+		
+
+;----------------------------------------------LARGEST --------------------------------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+
+;QUESTION 7 
+
+;PART3
+
+
+
+.DATA
+	ROW DW 1
+	LARGES DB 0
+	ARRY DB 1, 2, 3, 4 , 5 ,6 ,7 ,8 ,9
+	;1 2 3 
+	;4 5 6
+	;7 8 9 
+	TEMP DW 0
+	
+
+.CODE
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+	DEC ROW
+	MOV AX,ROW
+	MOV BL,3
+	MUL BL
+	MOV TEMP, AX
+	
+	MOV SI, TEMP
+	
+	MOV AL,ARRY[SI] ; N1
+	INC SI
+	MOV BL,ARRY[SI] ; N2
+	INC SI
+	MOV BH, ARRY[SI] ; N3
+	
+	
+	CMP AL,BL
+	JGE L1
+	
+	L2:
+		CMP BL,AL
+		JGE L3
+		
+		
+	L4:
+		CMP BH, AL
+		JGE L5
+		
+	L5:
+		CMP BH,BL
+		JGE EXIT1
+	
+	L3:
+		CMP BL,BH
+		JGE EXIT2
+		JMP L4
+	
+	
+	L1:
+		CMP AL,BH
+		JGE EXIT3
+		JMP L2
+		
+		
+	EXIT1:
+		MOV LARGES,BH
+		MOV AH,02H
+		MOV DL, LARGES
+		ADD DL, '0'
+		INT 21H
+		JMP EXIT
+		
+	
+	EXIT2:
+		MOV LARGES, BL
+		MOV AH,02H
+		MOV DL, LARGES
+		ADD DL, '0'
+		INT 21H
+		JMP EXIT
+		
+	EXIT3:
+		MOV LARGES, AL
+		MOV AH,02H
+		MOV DL, LARGES
+		ADD DL, '0'
+		INT 21H
+		JMP EXIT
+		
+		
+	EXIT:
+		;ENDING CODE
+		MOV AH, 4CH
+		INT 21H
+		END
+		
+	
+	
+	
+;	 IF(N1 >= N2 )
+;		IF(N1 >= N3)
+ ;       COUT << "LARGEST NUMBER: " << N1;
+
+;    IF(N2 >= N1)
+;		IF(N2 >= N3)
+ ;       COUT << "LARGEST NUMBER: " << N2;
+    
+  ;  IF(N3 >= N1)
+	;	IF(N3 >= N2)
+     ;   COUT << "LARGEST NUMBER: " << N3;
+  
+
+		
+	
+	
+;--------------------------------------------------------------- SMALLEST --------------------------------------------------------------------
+
+   
+ .MODEL SMALL
+.STACK 100H
+
+
+;QUESTION 7 
+
+;PART1
+
+
+
+.DATA
+	ROW DW 1
+	SMALLS DB 0
+	ARRY DB 1, 2, 3, 4 , 5 ,6 ,7 ,8 ,9
+	;1 2 3 
+	;4 5 6
+	;7 8 9 
+	TEMP DW 0
+	
+
+.CODE
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+	DEC ROW
+	MOV AX,ROW
+	MOV BL,3
+	MUL BL
+	MOV TEMP, AX
+	
+	MOV SI, TEMP
+	
+	MOV AL,ARRY[SI] ; N1
+	INC SI
+	MOV BL,ARRY[SI] ; N2
+	INC SI
+	MOV BH, ARRY[SI] ; N3
+	
+	
+	CMP AL,BL
+	JLE L1
+	
+	L2:
+		CMP BL,AL
+		JLE L3
+		
+		
+	L4:
+		CMP BH, AL
+		JLE L5
+		
+	L5:
+		CMP BH,BL
+		JLE EXIT1
+	
+	L3:
+		CMP BL,BH
+		JLE EXIT2
+		JMP L4
+	
+	
+	L1:
+		CMP AL,BH
+		JLE EXIT3
+		JMP L2
+		
+		
+	EXIT1:
+		MOV SMALLS,BH
+		MOV AH,02H
+		MOV DL, SMALLS
+		ADD DL, '0'
+		INT 21H
+		JMP EXIT
+		
+	
+	EXIT2:
+		MOV SMALLS, BL
+		MOV AH,02H
+		MOV DL, SMALLS
+		ADD DL, '0'
+		INT 21H
+		JMP EXIT
+		
+	EXIT3:
+		MOV SMALLS, AL
+		MOV AH,02H
+		MOV DL, SMALLS
+		ADD DL, '0'
+		INT 21H
+		JMP EXIT
+		
+		
+	EXIT:
+		;ENDING CODE
+		MOV AH, 4CH
+		INT 21H
+		END
+		
+	
+	
+	
+;	 IF(N1 <= N2 )
+;		IF(N1 <= N3)
+ ;       COUT << "LARGEST NUMBER: " << N1;
+
+;    IF(N2 <= N1)
+;		IF(N2 <= N3)
+ ;       COUT << "LARGEST NUMBER: " << N2;
+    
+  ;  IF(N3 <= N1)
+	;	IF(N3 <= N2)
+     ;   COUT << "LARGEST NUMBER: " << N3;
+  
+
+;-----------------------------------------------------------MATRIX ADDITION INDEXING ----------------------------------------------------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+
+;QUESTION 7 
+
+;PART1
+
+
+
+.DATA
+	
+	SUM DB 0
+	ARRY DB 1, 2, 3, 4 , 5 ,6 ,7 ,8 ,1
+	;1 2 3 
+	;4 5 6
+	;7 8 9 
+	
+
+.CODE
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+		
+	MOV SI,0
+	MOV CX ,3
+	
+	L1:
+		MOV AL,ARRY[SI]
+		ADD SUM,AL
+		ADD SI,4
+		
+	LOOP L1
+		
+	
+	
+	MOV AH,02H
+	MOV DL, SUM
+	ADD DL, '0'
+	INT 21H
+	;ENDING CODE
+	MOV AH, 4CH
+	INT 21H
+	END
+	
+;---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+
+;QUESTION 7 
+
+;PART1
+
+
+
+.DATA
+	
+	SUM DB 0
+	ARRY DB 1, 2, 3, 4, 2, 6, 4, 8, 1
+	;1 2 3 
+	;4 5 6
+	;7 8 9 
+	
+
+.CODE
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+		
+	MOV SI,2
+	MOV CX ,3
+	
+	L1:
+		MOV AL,ARRY[SI]
+		ADD SUM,AL
+		INC SI
+	LOOP L1
+		
+	
+	
+	MOV AH,02H
+	MOV DL, SUM
+	ADD DL, '0'
+	INT 21H
+	;ENDING CODE
+	MOV AH, 4CH
+	INT 21H
+	END
+	
+
+;----------------------------------------------------------------------------------------------------------------------------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+
+;QUESTION 7 
+
+;PART1
+
+
+
+.DATA
+	
+	SUM DB 0
+	ARRY DB 1,2,3,4,5,6,7,8,9
+	;1 2 3 
+	;4 5 6
+	;7 8 9 
+	
+
+.CODE
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+		
+	MOV SI, 1
+	MOV AL, ARRY[SI]
+	
+	MOV SI, 3
+	MOV BL, ARRY[SI]
+	
+	MOV ARRY[SI], AL
+	
+	MOV SI,1
+	
+	MOV ARRY[SI], BL
+	
+	
+	MOV SI, 2
+	MOV AL, ARRY[SI]
+	
+	MOV SI, 6
+	MOV BL, ARRY[SI]
+	
+	MOV ARRY[SI], AL
+	
+	MOV SI,2
+	
+	MOV ARRY[SI], BL
+	
+	
+	
+	MOV SI, 5
+	MOV AL, ARRY[SI]
+	
+	MOV SI, 7
+	MOV BL, ARRY[SI]
+	
+	MOV ARRY[SI], AL
+	
+	MOV SI,5
+	
+	MOV ARRY[SI], BL
+
+
+	
+	MOV SI, OFFSET ARRY
+	MOV CX , 9
+	
+	OUTSS:
+	MOV DL, [SI]
+	MOV AH,2
+	ADD DL, '0'
+	INT 21H
+	INC SI
+	
+	LOOP OUTSS
+	
+	MOV AH , 4CH
+	INT 21H
+	END
+	
+
+;-----------------------------------------------FINDING FACTORS-------------------------------------------------------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+.DATA
+
+	NUM DW 50
+	COUNT DW 1
+	VAL DW 0
+	TEMP DW 0
+	PRINTCOUNT DB 0
+.CODE
+
+	MOV AX, @DATA
+	MOV DS, AX
+	
+	JMP MAINSTART
+	
+	FACT PROC
+	POP AX
+	MOV TEMP, AX
+		MOV AX, NUM
+	L1:
+		MOV DX, 0
+		MOV AX, NUM
+		MOV BX, COUNT
+		DIV BX
+		CMP BX, NUM
+		JE BREAK
+		CMP DX,0
+		JE STACKING
+		INC COUNT
+	JMP L1
+	
+	STACKING:
+		INC VAL
+		PUSH BX
+		INC COUNT
+	JMP L1
+
+	BREAK:
+	MOV AX, TEMP
+	PUSH AX
+	RET
+	FACT ENDP
+	
+	OUTPUTFACT PROC
+	    
+	POP AX
+	MOV TEMP, AX
+	
+	MOV AX, 0
+	MOV CX, VAL
+	
+	POPING:
+		MOV PRINTCOUNT, 0
+		POP BX
+		GETNUM:
+		    MOV DX, 0
+			MOV AX, BX
+			MOV BX, 10
+			DIV BX
+			MOV SI, AX
+			MOV BX, SI
+			PUSH DX
+			INC PRINTCOUNT
+			CMP AX, 0
+			JNE GETNUM
+		
+		MOV BX, CX
+		MOV CH, 0
+		MOV CL, PRINTCOUNT
+		DISPLAYNUM:
+			POP DX
+			ADD DL, 48
+			MOV AH, 02H
+			INT 21H
+			LOOP DISPLAYNUM
+        
+        MOV CX, BX
+		
+		MOV AH, 02H
+		MOV DL, 10
+		INT 21H
+		MOV DL, 13
+		INT 21H
+		LOOP POPING
+    
+    MOV AX, TEMP
+    PUSH AX
+	RET
+	OUTPUTFACT ENDP
+
+    MAINSTART:
+    MAIN PROC
+       
+       CALL FACT
+       CALL OUTPUTFACT
+        
+    MAIN ENDP
+
+MOV AH, 4CH
+INT 21H
+END
+	
+	
+	
+;---------------------------------------------------STRING - SORTING--------------------------------------------------------------------------
+
+;	QUESTION NO 1
+.MODEL SMALL
+.STACK 100H
+.DATA
+	
+	MSG1 DB " $"
+	MSG2 DB " $"
+	MSG3 DB " $"
+	MSG4 DB "STRINGS IN ASCENDING ORDER: ", 10, 13, '$'
+	MYSTRING1 DB 30 DUP('$')
+	MYSTRING2 DB 30 DUP('$')
+	MYSTRING3 DB 30 DUP('$')
+	COUNT1 DW 0
+	COUNT2 DW 0
+	COUNT3 DW 0
+	TEMP DB 0
+.CODE
+START:
+	
+	MOV AX, @DATA
+	MOV DS, AX
+
+	MOV DX, OFFSET MSG1
+	MOV AH, 09
+	INT 21H
+	
+	MOV DX, OFFSET MYSTRING1
+	MOV AH, 3FH
+	INT 21H
+
+	MOV DX, OFFSET MSG2
+	MOV AH, 09
+	INT 21H
+	
+	MOV DX, OFFSET MYSTRING2
+	MOV AH, 3FH
+	INT 21H
+	
+	MOV DX, OFFSET MSG3
+	MOV AH, 09
+	INT 21H
+	
+	MOV DX, OFFSET MYSTRING3
+	MOV AH, 3FH
+	INT 21H
+
+	MOV TEMP, 1
+	MOV SI, 0
+	LOOP1:
+		CMP MYSTRING1[SI], 13
+		JE NEXT1
+		MOV AH, 0
+		MOV AL, MYSTRING1[SI]
+		MUL TEMP
+		ADD COUNT1, AX
+		INC SI
+		INC TEMP
+		JMP LOOP1
+
+	NEXT1:
+		MOV TEMP, 1
+		MOV SI, 0
+		LOOP2:
+			CMP MYSTRING2[SI], 13
+			JE NEXT2
+			MOV AH, 0
+			MOV AL, MYSTRING2[SI]
+			MUL TEMP
+			ADD COUNT2, AX
+			INC SI
+			INC TEMP
+			JMP LOOP2
+
+	NEXT2:
+		MOV TEMP, 1
+		MOV SI, 0
+		LOOP3:
+			CMP MYSTRING3[SI], 13
+			JE NEXT3
+			MOV AH, 0
+			MOV AL, MYSTRING3[SI]
+			MUL TEMP
+			ADD COUNT3, AX
+			INC SI
+			INC TEMP
+			JMP LOOP3
+
+	NEXT3:
+			MOV AX, COUNT1
+			MOV BX, COUNT2
+			MOV CX, COUNT3
+		
+		COMP1:
+			CMP AX, BX
+			JNA COMP2
+			CMP BX, CX
+			JNA COMP2
+			
+			MOV DX, 10
+			MOV AH, 02
+			INT 21H
+			MOV AH, 09
+			MOV DX, OFFSET MSG4
+			INT 21H
+			MOV DX, OFFSET MYSTRING3
+			INT 21H
+			MOV DX, OFFSET MYSTRING2
+			INT 21H
+			MOV DX, OFFSET MYSTRING1
+			INT 21H
+			JMP END1
+		
+		COMP2:
+			CMP AX, CX
+			JNA COMP3
+			CMP CX, BX
+			JNA COMP3
+			
+			MOV DX, 10
+			MOV AH, 02
+			INT 21H
+			MOV AH, 09
+			MOV DX, OFFSET MSG4
+			INT 21H
+			MOV DX, OFFSET MYSTRING2
+			INT 21H
+			MOV DX, OFFSET MYSTRING3
+			INT 21H
+			MOV DX, OFFSET MYSTRING1
+			INT 21H
+			JMP END1
+
+		COMP3:
+			CMP BX, AX
+			JNA COMP4
+			CMP AX, CX
+			JNA COMP4
+			
+			MOV DX, 10
+			MOV AH, 02
+			INT 21H
+			MOV AH, 09
+			MOV DX, OFFSET MSG4
+			INT 21H
+			MOV DX, OFFSET MYSTRING3
+			INT 21H
+			MOV DX, OFFSET MYSTRING1
+			INT 21H
+			MOV DX, OFFSET MYSTRING2
+			INT 21H
+			JMP END1
+
+		COMP4:
+			CMP BX, CX
+			JNA COMP5
+			CMP CX, AX
+			JNA COMP5
+			
+			MOV DX, 10
+			MOV AH, 02
+			INT 21H
+			MOV AH, 09
+			MOV DX, OFFSET MSG4
+			INT 21H
+			MOV DX, OFFSET MYSTRING1
+			INT 21H
+			MOV DX, OFFSET MYSTRING3
+			INT 21H
+			MOV DX, OFFSET MYSTRING2
+			INT 21H
+			JMP END1
+	
+		COMP5:
+			CMP CX, AX
+			JNA COMP6
+			CMP AX, BX
+			JNA COMP6
+			
+			MOV DX, 10
+			MOV AH, 02
+			INT 21H
+			MOV AH, 09
+			MOV DX, OFFSET MSG4
+			INT 21H
+			MOV DX, OFFSET MYSTRING2
+			INT 21H
+			MOV DX, OFFSET MYSTRING1
+			INT 21H
+			MOV DX, OFFSET MYSTRING3
+			INT 21H
+			JMP END1
+
+		COMP6:
+			
+			MOV DX, 10
+			MOV AH, 02
+			INT 21H
+			MOV AH, 09
+			MOV DX, OFFSET MSG4
+			INT 21H
+			MOV DX, OFFSET MYSTRING1
+			INT 21H
+			MOV DX, OFFSET MYSTRING2
+			INT 21H
+			MOV DX, OFFSET MYSTRING3
+			INT 21H
+			JMP END1
+
+
+
+
+
+
+	END1:
+		MOV AH, 4CH
+		INT 21H
+
+END START
+	
+;--------------------------------------------------PRINTING-PATTERN OF PYRAMIDS NUMBER--------------------------------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+.DATA
+
+	PATTERNPRINT DW 7
+	
+	COUNT DW 0
+	TEMP DW 0
+	TEMP1 DW 0
+	
+	COUNT6  DW 0
+	COUNTER6 DW 0
+	NEWCOUNTER6 DW 0
+	TEMP6 DW 2
+
+.CODE
+
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+	
+		
+	MOV CX,PATTERNPRINT
+	DEC CX
+	;-------------------------UPPER SIDE--------------------
+
+	L1:
+		;NEWLINE
+		MOV AH, 02H
+		MOV DL, 10 ; ASCII OF ENTER
+		INT 21H
+		MOV DL, 13
+		INT 21H
+		MOV BX,CX
+		INC COUNT
+
+		L2:
+			MOV AH,02H
+			MOV DL, 32
+			INT 21H
+			DEC BX
+			CMP BX,0
+			JNE L2
+			
+		MOV BX,0
+		MOV BX,COUNT
+		L3:
+			MOV AH,02H
+			MOV DX, BX
+			ADD DL, '0'
+			INT 21H
+			DEC BX
+			CMP BX,0
+			JNE L3
+			
+		MOV BX, 0
+		MOV BX, 2
+		L4:
+			MOV AH,02H
+			MOV DX, BX
+			ADD DL, '0'
+			INT 21H
+			INC BX
+			CMP BX,COUNT
+			JNA L4
+	LOOP L1
+	
+	
+	
+	
+
+	;---------------LOWER SIDE----------------------
+	
+	MOV CX, PATTERNPRINT
+	MOV COUNTER6, CX
+	MOV NEWCOUNTER6,CX
+	DEC CX
+	MOV COUNT6, 0
+	;|---------------|
+	;|------------- OUTLOOP -----------------------|
+	L11:		
+		;NEWLINE
+		MOV AH, 02H
+		MOV DL, 10 ; ASCII OF ENTER
+		INT 21H
+		DEC COUNTER6
+		MOV TEMP6, 0
+		MOV TEMP6, 2
+	
+	;|------------------NITIALIZATION REGISTER FOR FIRST INNER LOOP-------------------|
+		MOV BX, 1
+		INC COUNT6
+		;|----------- INNER SPACE LOOP LEFT SIDE -------------------|
+		L22:
+			MOV AH,02H
+			MOV DL, 32
+			INT 21H
+			INC BX
+			CMP BX,COUNT6
+		JBE L22
+		;|----------------INITIALIZATION REGISTER FOR SECOND INNER LOOP-------------------|
+		MOV BX, 0
+		MOV AX, 0
+		MOV BX, COUNTER6
+		;|----------- INNER NUMBER LOOP LEFT MID  SIDE -------------------|
+		L33:
+			MOV AH,02H
+			MOV DX, BX
+			ADD DL, '0'
+			INT 21H
+			DEC BX
+			CMP BX, 1
+		JNB L33
+		;|----------------INITIALIZATION REGISTER FOR THIRD INNER LOOP-------------------|
+		MOV BX, 0
+		MOV AX, 0
+	
+		MOV BX, NEWCOUNTER6
+		;|----------- INNER NUMBER LOOP RIGHT MID  SIDE -------------------|
+		L44:
+		
+			MOV AH,02H
+			MOV DX, TEMP6
+			ADD DL, '0'
+			INT 21H
+			INC TEMP6
+			CMP TEMP6,BX
+			JB L44
+			
+		DEC NEWCOUNTER6
+		
+
+	LOOP L11
+		
+
+
+EXIT::
+	MOV AH,04CH
+	INT 021H
+	END
+
+
+;----------------------------FINDING ARM-STRONG--------------------------------------------------------------------------------------------
+
+.MODEL SMALL
+.STACK 100H
+
+.DATA
+
+	MSG1  DB "ENTER A NUMBER $"
+	STRING1 DB 6
+	MSG2   DB 13,10,13,10,13,10,'$'
+	COUNT DB 0
+	ARM DB "NUMBER IS ARM STRONG$"
+	NOTARM DB "NUMBER IS NOT ARM STRONG$"
+	ORIGINALNUM DW 371
+	PRE DW 0
+	NEWTEMP1 DW 0
+	NEWTEMP2 DW 0
+	NEWTEMP3 DW 0
+	TEMP1 DW 0
+	TEMP2 DW 0
+	TEMP3 DW 0
+
+.CODE          
+
+  MOV  AX, @DATA
+  MOV  DS, AX
+  MOV  AH, 9
+  MOV  DX, OFFSET MSG1
+  INT  21H
+  MOV  AH, 0AH
+  MOV  DX, OFFSET STRING1
+  INT  21H
+  MOV  SI, OFFSET STRING1 + 1 
+  MOV  CL, [ SI ]                                       
+  MOV  CH, 0
+  ADD  SI, CX 
+  MOV  BX, 0
+  MOV  BP, 1 
+REPEAT1:        
+	INC COUNT 
+	MOV  AL, [ SI ] 
+	SUB  AL, 48 
+	MOV  AH, 0 
+	MUL  BP 
+	ADD  BX,AX 
+	MOV  AX, BP
+	MOV  BP, 10
+	MUL  BP
+	MOV  BP, AX   
+	DEC  SI 
+LOOP REPEAT1
+  
+;NEWLINE
+MOV AH, 02H
+MOV DL, 10 ; ASCII OF ENTER
+INT 21H
+
+
+MOV ORIGINALNUM, BX
+MOV AX, 0
+CMP COUNT, 3
+JE THREE
+CMP COUNT, 2
+JE TWO
+CMP COUNT, 1
+JE ONE
+
+ONE:
+		MOV AX, ORIGINALNUM
+		MOV PRE, AX
+	
+		MOV BX,1
+		MUL BX
+		CMP AX,PRE
+		JE ARMSTRONG
+		;STRING OUTPUT
+		LEA DX,NOTARM
+		MOV AH, 09H
+		INT 21H
+		JMP EXIT
+	
+TWO:
+		MOV AX, ORIGINALNUM
+		MOV PRE, AX
+		MOV DX, 0 
+		MOV BX, 10
+		DIV BX
+		MOV ORIGINALNUM, AX 
+		MOV TEMP1, AX		; QUOTIENT
+		MOV TEMP2, DX		; REMAINDER
+		MOV AX, 0
+		MOV BX, 0
+		MOV DX, 0
+		MOV AX, TEMP1
+		MOV BX, TEMP1
+		MUL BX	
+		MOV NEWTEMP1, AX
+		MOV AX, 0
+		MOV BX, 0
+		MOV DX, 0
+		MOV AX, TEMP2
+		MOV BX, TEMP2
+		MUL BX	
+		MOV NEWTEMP2, AX
+		MOV AX, NEWTEMP1
+		MOV BX, NEWTEMP2
+		ADD AX,BX
+		CMP AX, PRE
+		JE ARMSTRONG
+		;STRING OUTPUT
+		LEA DX,NOTARM
+		MOV AH, 09H
+		INT 21H
+		JMP EXIT
+	
+	
+
+THREE:
+		MOV AX, ORIGINALNUM
+		MOV PRE, AX
+		MOV DX, 0 
+		MOV BX, 10
+		DIV BX
+		MOV ORIGINALNUM, AX ; QUOTIENT
+		MOV TEMP1, DX		; REMAINDER
+		MOV DX, 0 
+		MOV AX, ORIGINALNUM
+		MOV BX, 10
+		DIV BX
+		MOV ORIGINALNUM, AX ; QUOTIENT
+		MOV TEMP2, DX		; REMAINDER
+		MOV DX, 0 
+		MOV AX, ORIGINALNUM
+		MOV BX, 10
+		DIV BX
+		MOV TEMP3, DX		; REMAINDER
+		MOV AX, 0
+		MOV BX, 0
+		MOV DX, 0
+		MOV AX, TEMP1
+		MOV BX, TEMP1
+		MUL BX	
+		MUL BX
+		MOV NEWTEMP1, AX
+		MOV AX, 0
+		MOV BX, 0
+		MOV DX, 0
+		MOV AX, TEMP2
+		MOV BX, TEMP2
+		MUL BX	
+		MUL BX
+		MOV NEWTEMP2, AX
+		MOV AX, 0
+		MOV BX, 0
+		MOV DX, 0
+		MOV AX, TEMP3
+		MOV BX, TEMP3
+		MUL BX	
+		MUL BX
+		MOV NEWTEMP3, AX
+		MOV AX, 0
+		MOV BX, 0
+		MOV DX, 0
+		MOV AX, NEWTEMP1
+		MOV BX, NEWTEMP2
+		MOV DX, NEWTEMP3
+		ADD BX,DX
+		ADD AX,BX
+		CMP AX, PRE
+		JE ARMSTRONG
+		;STRING OUTPUT
+		LEA DX,NOTARM
+		MOV AH, 09H
+		INT 21H
+		JMP EXIT
+ARMSTRONG:
+	;STRING OUTPUT
+	LEA DX,ARM
+	MOV AH, 09H
+	INT 21H
+	JMP EXIT
+EXIT:
+	MOV AH,04CH
+	INT 021H
+	END 
+	
+
+;----------------------------------MAKE ARRAY OBJECT OF STUDENT OF 5 AND CALCULATING / INSERTING MARKS OF EVERY STUDENT----------------------------------
+;QUESTION 02
+.MODEL SMALL
+.STACK 100H
+
+EMP STRUCT
+
+	SUBJ1OBT DW 0
+	SUBJ2OBT DW 0
+	SUBJ3OBT DW 0
+	SUBJ4OBT DW 0
+	SUBJ5OBT DW 0
+	
+
+	
+EMP ENDS
+ 
+.DATA
+	OBJ EMP 5 DUP(<>)
+	TOTALSTUDENT1 DW 0
+	TOTALSTUDENT2 DW 0
+	TOTALSTUDENT3 DW 0
+	TOTALSTUDENT4 DW 0
+	TOTALSTUDENT5 DW 0
+
+	PERSTUDENT1 DW 0
+	PERSTUDENT2 DW 0
+	PERSTUDENT3 DW 0
+	PERSTUDENT4 DW 0
+	PERSTUDENT5 DW 0
+	
+	MSG1 DB "TOTAL MARKS OF FIRST  STUDENT IS: $"
+	MSG2 DB "TOTAL MARKS OF SECOND  STUDENT IS: $"
+	MSG3 DB "TOTAL MARKS OF THIRD  STUDENT IS: $"
+	MSG4 DB "TOTAL MARKS OF FOURTH  STUDENT IS: $"
+	MSG5 DB "TOTAL MARKS OF FIFTH  STUDENT IS: $"
+	
+	PER1 DB "PERCENTAGE OF FIRST STUDENT IS: $"
+	PER2 DB "PERCENTAGE OF SECOND STUDENT IS: $"
+	PER3 DB "PERCENTAGE OF THIRD STUDENT IS: $"
+	PER4 DB "PERCENTAGE OF FOURTH STUDENT IS: $"
+	PER5 DB "PERCENTAGE OF FIFTH STUDENT IS: $"
+	
+	LOW1 DB "LOWEST IN FIRST SUBJECT IS: $"
+	LOW2 DB "LOWEST IN SECOND SUBJECT IS: $"
+	LOW3 DB "LOWEST IN THIRD SUBJECT IS: $"
+	LOW4 DB "LOWEST IN FOURTH SUBJECT IS: $"
+	LOW5 DB "LOWEST IN FIFTH SUBJECT IS: $"
+	
+	HOW1 DB "HIGHEST IN FIRST SUBJECT IS: $"
+	HOW2 DB "HIGHEST IN SECOND SUBJECT IS: $"
+	HOW3 DB "HIGHEST IN THIRD SUBJECT IS: $"
+	HOW4 DB "HIGHEST IN FOURTH SUBJECT IS: $"
+	HOW5 DB "HIGHEST IN FIFTH SUBJECT IS: $"
+		
+	SUBJ1MARKS DB 5 DUP(0)
+	SUBJ2MARKS DB 5 DUP(0)
+	SUBJ3MARKS DB 5 DUP(0)
+	SUBJ4MARKS DB 5 DUP(0)
+	
+	TEMP1 DW 0
+	TEMP2 DW 0
+	TEMP3 DW 0
+	TEMP4 DW 0
+	TEMP5 DW 0
+	
+	
+	AVG1 DB "AVERAGE OF FIRST SUBJECT OF ALL THE STUDENTS IS: $"
+	AVG2 DB "AVERAGE OF SECOND SUBJECT OF ALL THE STUDENTS IS: $"	
+	AVG3 DB "AVERAGE OF THIRD SUBJECT OF ALL THE STUDENTS IS: $"
+	AVG4 DB "AVERAGE OF FOURTH SUBJECT OF ALL THE STUDENTS IS: $"	
+	AVG5 DB "AVERAGE OF FIFTH SUBJECT OF ALL THE STUDENTS IS: $"	
+	
+	
+	
+	
+.CODE 
+
+	;STATEMENTS FOR LOADING THE DATA 
+	MOV AX, @DATA
+	MOV DS,AX
+	MOV AX, 0
+	
+		
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+
+	MOV BX, 1
+	MOV AX, 2
+	MOV OBJ[0].SUBJ1OBT, BX ;1
+	MOV OBJ[0].SUBJ2OBT, AX ;2
+	MOV OBJ[0].SUBJ3OBT, BX ;1
+	MOV OBJ[0].SUBJ4OBT, AX ;2
+	MOV OBJ[0].SUBJ5OBT, BX ;1
+	
+	;TOTAL MARKS OF FIRST STUDENT 
+	MOV SI, OFFSET SUBJ1MARKS
+	MOV AX, 0
+	MOV BX, 0
+	MOV AX,OBJ[0].SUBJ1OBT;1
+	MOV AH,0
+	MOV [SI],AX
+	ADD TEMP1,AX
+	INC SI
+	ADD AX,OBJ[0].SUBJ2OBT;2
+	MOV AH,0
+	ADD TEMP2,AX
+	ADD AX,OBJ[0].SUBJ3OBT;1
+	MOV AH,0
+	ADD TEMP3,AX	
+	ADD AX,OBJ[0].SUBJ4OBT;2
+	MOV AH,0
+	ADD TEMP4,AX	
+	ADD AX,OBJ[0].SUBJ5OBT;1
+	MOV AH,0
+	ADD TEMP5,AX
+	MOV TOTALSTUDENT1, AX 	; 7 TOTAL MARKS OF STUDENT 1
+	
+	
+	;STRING OUTPUT
+	LEA DX, MSG1
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, TOTALSTUDENT1
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+		
+	MOV AX, 0
+	MOV BX, 0
+	MOV AX, 3
+	MOV BX, 2
+	MOV OBJ[1].SUBJ1OBT, BX ;2
+	MOV OBJ[1].SUBJ2OBT, AX ;3
+	MOV OBJ[1].SUBJ3OBT, BX ;2
+	MOV OBJ[1].SUBJ4OBT, AX ;3
+	MOV OBJ[1].SUBJ5OBT, BX ;2
+	
+	;TOTAL MARKS OF SECOND STUDENT
+	MOV AX,0
+	MOV AX,OBJ[1].SUBJ1OBT
+	MOV AH,0
+	MOV [SI],AX
+	ADD TEMP1,AX
+	INC SI
+	ADD AX,OBJ[1].SUBJ2OBT
+	MOV AH,0
+	ADD TEMP2,AX
+	ADD AX,OBJ[1].SUBJ3OBT
+	MOV AH,0
+	ADD TEMP3,AX
+	ADD AX,OBJ[1].SUBJ4OBT
+	MOV AH,0
+	ADD TEMP4,AX
+	ADD AX,OBJ[1].SUBJ5OBT
+	MOV AH,0
+	ADD TEMP5,AX
+	MOV TOTALSTUDENT2, AX ; 12 TOTAL MARKS OF STUDENT 2
+	
+	;STRING OUTPUT
+	LEA DX, MSG2
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, TOTALSTUDENT2
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+
+	
+	MOV AX, 0
+	MOV BX, 0
+	MOV AX, 4
+	MOV BX, 3
+
+	MOV OBJ[2].SUBJ1OBT, BX ;3
+	MOV OBJ[2].SUBJ2OBT, AX ;4
+	MOV OBJ[2].SUBJ3OBT, BX ;3
+	MOV OBJ[2].SUBJ4OBT, AX ;4
+	MOV OBJ[2].SUBJ5OBT, BX ;3
+	
+	;TOTAL MARKS OF THIRD STUDENT
+	MOV AX,0
+	MOV AX,OBJ[2].SUBJ1OBT
+	MOV AH,0
+	MOV [SI],AX
+	ADD TEMP1,AX
+	INC SI
+	ADD AX,OBJ[2].SUBJ2OBT
+	MOV AH,0
+	ADD TEMP2,AX
+	ADD AX,OBJ[2].SUBJ3OBT
+	MOV AH,0
+	ADD TEMP3,AX
+	ADD AX,OBJ[2].SUBJ4OBT
+	MOV AH,0
+	ADD TEMP4,AX
+	ADD AX,OBJ[2].SUBJ5OBT
+	MOV AH,0
+	ADD TEMP5,AX
+	MOV TOTALSTUDENT3, AX ; 17 TOTAL  MARKS OF STUDENT 2
+	
+	;STRING OUTPUT
+	LEA DX, MSG3
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, TOTALSTUDENT3
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	
+	
+	MOV AX, 0
+	MOV BX, 0
+	MOV AX, 5
+	MOV BX, 4
+
+	MOV OBJ[3].SUBJ1OBT, BX ;4
+	MOV OBJ[3].SUBJ2OBT, AX ;5
+	MOV OBJ[3].SUBJ3OBT, BX ;4
+	MOV OBJ[3].SUBJ4OBT, AX ;5
+	MOV OBJ[3].SUBJ5OBT, BX ;4
+	
+	;TOTAL MARKS OF FOURTH STUDENT
+	MOV AX,0
+	MOV AX,OBJ[3].SUBJ1OBT
+	MOV AH,0
+	MOV [SI],AX
+	ADD TEMP1,AX
+	INC SI
+	ADD AX,OBJ[3].SUBJ2OBT
+	MOV AH,0
+	ADD TEMP2,AX
+	ADD AX,OBJ[3].SUBJ3OBT
+	MOV AH,0
+	ADD TEMP3,AX
+	ADD AX,OBJ[3].SUBJ4OBT
+	MOV AH,0
+	ADD TEMP4,AX
+	ADD AX,OBJ[3].SUBJ5OBT
+	MOV AH,0
+	ADD TEMP5,AX
+	MOV TOTALSTUDENT4, AX ; 22 TOTAL MARKS OF STUDENT 4
+	
+	;STRING OUTPUT
+	LEA DX, MSG4
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, TOTALSTUDENT4
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	MOV AX, 0
+	MOV BX, 0
+	MOV AX, 6
+	MOV BX, 5
+	MOV OBJ[4].SUBJ1OBT, BX ;5
+	MOV OBJ[4].SUBJ2OBT, AX ;6
+	MOV OBJ[4].SUBJ3OBT, BX ;5
+	MOV OBJ[4].SUBJ4OBT, AX ;6
+	MOV OBJ[4].SUBJ5OBT, BX ;5
+	
+	;TOTAL MARKS OF FIFTH STUDENT
+	MOV AX,0
+	MOV AX,OBJ[4].SUBJ1OBT
+	MOV AH,0
+	MOV [SI],AX
+	ADD TEMP1,AX
+	INC SI
+	ADD AX,OBJ[4].SUBJ2OBT
+	MOV AH,0
+	ADD TEMP2,AX
+	ADD AX,OBJ[4].SUBJ3OBT
+	MOV AH,0
+	ADD TEMP3,AX
+	ADD AX,OBJ[4].SUBJ4OBT
+	MOV AH,0
+	ADD TEMP4,AX
+	ADD AX,OBJ[4].SUBJ5OBT
+	MOV AH,0
+	ADD TEMP5,AX
+	MOV TOTALSTUDENT5, AX ; 27 MARKS OF STUDENT 5
+	
+	;STRING OUTPUT
+	LEA DX, MSG5
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, TOTALSTUDENT5
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	
+	;PERCENTAGE OF STUDENT1
+	MOV AX, TOTALSTUDENT1
+	MOV BX, 100
+	MUL BX
+	MOV BX, 0
+	MOV BX, 50
+	DIV BX
+	MOV PERSTUDENT1, AX ; 14 %
+
+	;STRING OUTPUT
+	LEA DX, PER1
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, PERSTUDENT1
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+
+	
+	MOV AX, 0
+	MOV BX, 0
+	;PERCENTAGE OF STUDENT2
+	MOV AX, TOTALSTUDENT2
+	MOV BX, 100
+	MUL BX
+	MOV BX, 0
+	MOV BX, 50
+	DIV BX
+	MOV PERSTUDENT2, AX
+	
+	;STRING OUTPUT
+	LEA DX, PER2
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, PERSTUDENT2
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	
+	MOV AX, 0
+	MOV BX, 0
+	;PERCENTAGE OF STUDENT3
+	MOV AX, TOTALSTUDENT3
+	MOV BX, 100
+	MUL BX
+	MOV BX, 0
+	MOV BX, 50
+	DIV BX
+	MOV PERSTUDENT3, AX
+	
+	;STRING OUTPUT
+	LEA DX, PER3
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, PERSTUDENT3
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	
+	MOV AX, 0
+	MOV BX, 0
+	;PERCENTAGE OF STUDENT4
+	MOV AX, TOTALSTUDENT4
+	MOV BX, 100
+	MUL BX
+	MOV BX, 0
+	MOV BX, 50
+	DIV BX
+	MOV PERSTUDENT4, AX
+	
+	;STRING OUTPUT
+	LEA DX, PER4
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, PERSTUDENT4
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	
+	MOV AX, 0
+	MOV BX, 0
+	;PERCENTAGE OF STUDENT5
+	MOV AX, TOTALSTUDENT5
+	MOV BX, 100
+	MUL BX
+	MOV BX, 0
+	MOV BX, 50
+	DIV BX
+	MOV PERSTUDENT5, AX
+	
+	;STRING OUTPUT
+	LEA DX, PER5
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, PERSTUDENT5
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	MOV AX, 0
+	MOV BX, 0
+	
+	;HIGHEST AND LOWEST IN EACH SUBJECT 
+
+	
+	;SORTING ARRAY AND FOR FINDING LOWEST IN SUBJECT1
+	MOV CH, 4
+
+	SORTINGASCENDING1:
+		MOV CL, 4
+		LEA SI, SUBJ1MARKS
+
+	SORTINGASCENDING :
+		MOV AL, [SI]
+		MOV BL, [SI + 1]
+		CMP AL, BL
+		JC SORT
+		MOV DL, [SI + 1]
+		XCHG[SI], DL
+		MOV[SI + 1], DL
+		
+	SORT :
+		INC SI
+		DEC CL
+		JNZ SORTINGASCENDING
+		DEC CH
+		JNZ SORTINGASCENDING1
+	
+		;STRING OUTPUT
+		LEA DX, LOW1
+		MOV AH, 09H
+		INT 21H
+	
+		MOV BX, OFFSET SUBJ1MARKS
+		;OUTPUT
+		MOV AH,02H
+		MOV DX, [BX]
+		ADD DL, '0'
+		INT 21H
+		;NEWLINE
+		MOV AH, 02H
+		MOV DL, 10 ; ASCII OF ENTER
+		INT 21H
+		
+		
+	;SORTING ARRAY AND FOR FINDING HIGHEST IN FIRST SUBJECT
+		
+	MOV CH, 04
+	MYLOOP22:
+	MOV CL, 04
+	LEA SI, SUBJ1MARKS
+	MYLOOP11 :
+	MOV AL, [SI]
+	MOV BL, [SI + 1]
+	CMP AL, BL
+	JNC DESCENDING1
+	MOV DL, [SI + 1]
+	XCHG[SI], DL
+	MOV[SI + 1], DL
+	DESCENDING1 :
+		INC SI
+		DEC CL
+		JNZ MYLOOP11
+		DEC CH
+		JNZ MYLOOP22
+	;STRING OUTPUT
+		LEA DX, HOW1
+		MOV AH, 09H
+		INT 21H
+		MOV BX, OFFSET SUBJ1MARKS
+		;OUTPUT
+		MOV AH,02H
+		MOV DX, [BX]
+		ADD DL, '0'
+		INT 21H
+		;NEWLINE
+		MOV AH, 02H
+		MOV DL, 10 ; ASCII OF ENTER
+		INT 21H
+		;NEWLINE
+		MOV AH, 02H
+		MOV DL, 10 ; ASCII OF ENTER
+		INT 21H	
+
+		
+	; NOTE: I HAVE TO COPY PASTE ASCENDING AND DESCENDING ALGORITHM AGAIN AND AGAIN FOR EVERY ARRAY IT IS SAME LOGIC, JUST INCREASE IN THE LENGTH, SO I'M NOT DOING	
+
+
+	;FINDING AVERGAE OF EVERY SUBJECT
+	;AVERAGE OF FIRST SUBJECT IS
+	MOV AX, 0
+	MOV BX, 0
+	MOV DX, 0
+	MOV CX, 0
+	
+	MOV AX, TEMP1
+	MOV BX,5
+	DIV BX
+	MOV TEMP1,AX
+	
+	;STRING OUTPUT
+	LEA DX, AVG1
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, TEMP1
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	;AVERAGE OF SECOND SUBJECT IS
+	
+	MOV AX, 0
+	MOV BX, 0
+	MOV DX, 0
+	MOV CX, 0
+	
+	MOV AX, TEMP2
+	MOV BX,5
+	DIV BX
+	MOV TEMP2,AX
+	
+	;STRING OUTPUT
+	LEA DX, AVG2
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, TEMP2
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H
+	
+	;AVERAGE OF THIRD SUBJECT IS
+	MOV AX, 0
+	MOV BX, 0
+	MOV DX, 0
+	MOV CX, 0
+	
+	MOV AX, TEMP3
+	MOV BX,5
+	DIV BX
+	MOV TEMP3,AX
+	
+	;STRING OUTPUT
+	LEA DX, AVG3
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, TEMP3
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H	
+
+	;AVERAGE OF FOURTH STUDENT IS 
+	MOV AX, 0
+	MOV BX, 0
+	MOV DX, 0
+	MOV CX, 0
+	
+	MOV AX, TEMP4
+	MOV BX,5
+	DIV BX
+	MOV TEMP4,AX
+	
+	;STRING OUTPUT
+	LEA DX, AVG4
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, TEMP4
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H	
+
+	;AVERAGE OF FIFTH STUDENT IS 
+	MOV AX, 0
+	MOV BX, 0
+	MOV DX, 0
+	MOV CX, 0
+	
+	MOV AX, TEMP5
+	MOV BX,5
+	DIV BX
+	MOV TEMP5,AX
+	
+	;STRING OUTPUT
+	LEA DX, AVG5
+	MOV AH, 09H
+	INT 21H
+	
+	;OUTPUT
+	MOV AH,02H
+	MOV DX, TEMP5
+	ADD DL, '0'
+	INT 21H
+	
+	;NEWLINE
+	MOV AH, 02H
+	MOV DL, 10 ; ASCII OF ENTER
+	INT 21H	
+
+EXIT:
+	MOV AH , 4CH
+	INT 21H
+	END
+
+
+;-------------------------------------------------PROJECT-------------------------------------------------------------------------------------
+
+.MODEL LARGE
+.STACK 100H
+
+BOXES STRUCT
+	X_START DW 0
+	Y_START DW 0
+	X_END DW 0
+	Y_END DW 0
+	COLOUR DB 4H
+	HITS DW 1
+	SPECIAL DB 0
+	FIXED DB 0
+BOXES ENDS
+
+PADDLE STRUCT
+	X_START DW 0
+	Y_START DW 0
+	X_END DW 0
+	Y_END DW 0
+	COLOUR DB 11
+	SPEED DW 10
+	HITS DW -1
+PADDLE ENDS
+
+BALL STRUCT  
+	X_START DW 0
+	Y_START DW 0
+	X_END DW 0
+	Y_END DW 0
+	X_SPEED DW 0
+	Y_SPEED DW 0
+	COLOUR DB 08H
+BALL ENDS
+
+.DATA
+USERNAME DB 16
+		 DB ?
+		 DB 16 DUP('$')
+BGCOLOUR DB 08H
+GAMESPEED DW 10000
+STRUCTSIZE DW 0
+SCORE DW 0
+LIVES DW 3
+CURRENTTIME DB 0
+GAMETIME DW 241
+PAUSEXCORD DW 100
+PAUSEYCORD DW  70
+INDEX DB 0
+LIVESSTRING DB 'LIVES: ' , '$'
+SCORESTRING DB 'SCORE: ' , '$'
+TIMESTRING DB 'TIME: ', '$' 
+RES1 DB '      RESUME     ','$'
+RES2 DB 'EXIT TO MAIN MENU','$'
+LEVEL1BOOL DB 0
+LEVEL2BOOL DB 0
+LEVEL3BOOL DB 0
+CURRENTBRICKS DB 0
+RANDNUM DB 0
+SOUNDBOOL DB 0
+; BOXES XSTART, YSTART, XEND, YEND ,COLOUR , HITS
+; --------------------------------------LEVEL 1 BRICKS--------------------------------------------------------------
+B111 BOXES <15,30,37,44,03,1>
+B112 BOXES <38,30,68,44,05,1>
+B113 BOXES <69,30,107,44,09,1>
+B114 BOXES <108,30,146,44,00,1>
+B115 BOXES <147,30,185,44,15,1>
+B116 BOXES <186,30,224,44,05,1>
+B117 BOXES <225,30,263,44,03,1>
+B118 BOXES <264,30,290,44,03,1>
+B119 BOXES <291,30,303,44,03,1>
+
+B121 BOXES <18,45,51,59,06,1>
+B122 BOXES <52,45,96,59,07,1>
+B123 BOXES <97,45,115,59,06,1>
+B124 BOXES <116,45,155,59,07,1>
+B125 BOXES <156,45,200,59,06,1>
+B126 BOXES <201,45,240,59,07,1>
+B127 BOXES <241,45,296,59,06,1>
+
+;------------------------------LEVEL 2 BRICKS -----------------------------
+;FIRST LINE
+L11 BOXES <140,30,170,44,03,2>
+;SECOND LINE
+L12 BOXES <140,45,170,59,03,2>
+L13 BOXES <109,45,139,59,14,2>
+L14 BOXES <171,45,201,59,14,2>
+;THIRD LINE
+L15 BOXES <140,60,170,74,03,2>
+L16 BOXES <109,60,139,74,14,2>
+L17 BOXES <171,60,201,74,14,2>
+L18 BOXES <78 ,60,108,74,03,2>
+L19 BOXES <202,60,232,74,03,2>
+;FOURTH LINE
+L20 BOXES <140,75,170,89,03,2>
+L21 BOXES <109,75,139,89,14,2>
+L22 BOXES <171,75,201,89,14,2>
+L23 BOXES <78 ,75,108,89,03,2>
+L24 BOXES <202,75,232,89,03,2>
+L25 BOXES <47,75,77,89,14,2>
+L26 BOXES <233,75,263,89,14,2>
+;FIFTH LINE 
+L27 BOXES <140,90,170,104,03,2>
+L28 BOXES <109,90,139,104,14,2>
+L29 BOXES <171,90,201,104,14,2>
+L30 BOXES <78 ,90,108,104,03,2>
+L31 BOXES <202,90,232,104,03,2>
+L32 BOXES <47 ,90,77 ,104,14,2>
+L33 BOXES <233,90,263,104,14,2>
+;SIXTH LINE
+L34 BOXES <140,105,170,119,03,2>
+L35 BOXES <109,105,139,119,14,2>
+L36 BOXES <171,105,201,119,14,2>
+L37 BOXES <78 ,105,108,119,03,2>
+L38 BOXES <202,105,232,119,03,2>
+;SEVENTH LINE
+L39 BOXES <140,120,170,134,03,2>
+L40 BOXES <109,120,139,134,14,2>
+L41 BOXES <171,120,201,134,14,2>
+;EIGHT LINE
+L42 BOXES <140,135,170,149,03,2>
+;MID LEFT BRICK
+L43 BOXES <30 ,75,40,105,15,2>
+;MID RIGHT BRICK
+L44 BOXES <269 ,75,279,105,15,2>
+;------------------------------ LEVEL 3 BRICKS ----------------------------
+; C31 , C32
+;HEART TOP LINE
+C31 BOXES <	 110,    31  ,  138,   41,    04 , 3,1,0>
+C32 BOXES <	 210,    31  ,  240,   41,    04  , 3,1,0>
+;C33,C34,C35, C36
+;HEART SECOND LINE
+C33 BOXES <	 100,    42  ,  125,   52,    03  , 3>
+C34 BOXES <	 126,    42  ,  151,   52,    02  , 3>
+NEW1 BOXES < 152,	 42  ,	177,   52,    01  , 3,0,1>
+NEW2 BOXES < 178,	 42  ,	203,   52,    00  , 3>
+NEW3 BOXES < 204,	 42  ,	229,   52,    15  , 3>
+C35 BOXES <	 230,    42  ,  255,   52,    14  , 3>
+C36 BOXES <	 256,    42  ,  281,   52,    08  , 3>
+;C37,C38,C38,C39, C40, C41, C41, C42, C43, C44, 
+;HEART THIRD LINE
+C37 BOXES <	 114,   53  ,   137,   63,    13  , 3>
+C38 BOXES <	 138 ,   53  ,  163,   63,    12  , 3>
+C39 BOXES <	 164 ,   53  ,  189,   63,    11  , 3>
+C40 BOXES <	 190 ,   53  ,  215,   63,    10  , 3>
+C41 BOXES <	 216 ,   53  ,  241,   63,    09  , 3>
+;C51,C52,C53,C54,C55,C56,C57,C58,
+;FOURTH LINE
+C51 BOXES <	 124 ,   64  ,  149,   74,    04  , 3,1,0>
+C52 BOXES <	 150 ,   64  ,  175,   74,    03  , 3>
+C53 BOXES <	 176 ,   64  ,  201,   74,    02  , 3>
+C54 BOXES <	 202 ,   64  ,  227,   74,    01  , 3,0,1>
+
+;C45, C46, C47, C48, C49, C50,
+;FIFTH LINE 
+C45 BOXES <	 134 ,   75  ,  161,   85,    04  , 3,1,0>
+C46 BOXES <	 162 ,   75  ,  189,   85,    12  , 3>
+C47 BOXES <	 190 ,   75  ,  214,   85,    11  , 3>
+
+;C59, C60, C61, C62,
+;SIXTH LINE
+C59 BOXES <	 149,    86  ,  174,   96,    06  , 3>
+C60 BOXES <	 175 ,   86  ,  200,   96,    05  , 3>
+
+;C63, C64
+;SEVENTH LINE
+C63 BOXES <	 160 ,   97  ,  174,   107,    01  , 3,0,1>
+C64 BOXES <	 175 ,   97  ,  189,   107,    00  , 3>
+;C65,
+;EIGHT LINE HEART
+C65 BOXES <	 170 ,   108  ,  180,   118,    04  , 3,1,0>
+
+; BALL X START, Y START, XEND , Y END , XSPEED, Y SPEED
+MAINBALL BALL < 160, 130, 170, 140, 1 , 1> 
+
+PLAYER1 PADDLE <120,190,200,195>
+
+;DISPLAY OBJECTS 
+ROW_NO DW 0
+COL_NO DW 0
+
+GAMEWIN DB "YOU WIN!!",'$'
+
+BACKTOMAIN DB "PRESS ANY KEY$"
+	
+
+WINEMOJI		DB 11,11,11,11,11,11,11,14,14,14,14,11,11,11,11,11,11,11
+				DB 11,11,11,11,11,14,14,14,14,14,14,14,11,11,11,11,11,11
+				DB 11,11,11,11,14,14,14,14,14,14,14,14,14,11,11,11,11,11
+				DB 11,11,11,14,14,14,0 ,0 ,14,14,0 ,0 ,14,14,11,11,11,11
+				DB 11,11,11,14,14,14,0 ,0 ,14,14,0 ,0 ,14,14,11,11,11,11
+				DB 11,11,11,14,14,14,14,14,14,14,14,14,14,14,11,11,11,11
+				DB 11,11,11,14,14,14,14,14,0 ,14,14,14,14,14,11,11,11,11
+				DB 11,11,11,14,14,14,14,14,0 ,14,14,14,14,14,11,11,11,11
+				DB 11,11,11,14,14,0 ,14,14,0 ,14,14, 0,14,14,11,11,11,11
+				DB 11,11,11,11,14,14,0 ,14,14,14,0 ,14,14,14,11,11,11,11
+				DB 11,11,11,11,11,14,14,0 ,0 ,0 ,14,14,14,11,11,11,11,11
+				DB 11,11,11,11,11,11,11,14,14,14,14,11,11,11,11,11,11,11
+				DB 11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11
+				DB 11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11
+;HEART
+HEART_DIM_X DW 18
+HEART_DIM_Y DW 18
+
+
+; --------------------  TITLE PAGE -------------------------------------
+_COUNTER DB 0
+_XSTART DW 0
+_YSTART DW 0
+_XEND DW 40
+_YEND DW 15
+TEMP1 DB 0
+
+BRICKBALL DB "BRICK BALL GAME",'$'
+INPUTNAME DB  "ENTER YOUR NAME$"
+
+BALLARRAY   DB  8,  8,  8, 8, 8, 8, 8,  8
+			DB  8,  8,   1,  1,  1, 8, 8,  8
+			DB  8,   1,   1,  1,  1,  1, 8,  8
+			DB  8,   1,   1,  1,  1,  1, 8,  8
+			DB  8,   1,   1,  1,  1,  1, 8,  8
+			DB  8,  8,   1,  1,  1, 8, 8,  8
+			DB  8,  8,  8, 8, 8, 8, 8,  8
+			DB  8,  8,  8, 8, 8, 8, 8,  8
+
+NULLBALL    DB  8,  8,  8, 8, 8, 8, 8,  8
+			DB  8,  8,   8,  8,  8, 8, 8,  8
+			DB  8,  8,  8, 8, 8, 8, 8,  8
+			DB  8,   8,   8,  8,  8,  8, 8,  8
+			DB  8,   8,   8,  8,  8,  8, 8,  8
+			DB  8,  8,   8,  8,  8, 8, 8,  8
+			DB  8,  8,  8, 8, 8, 8, 8,  8
+			DB  8,  8,  8, 8, 8, 8, 8,  8
+
+	;BALL
+DIM_X_BALL DW 8
+DIM_Y_BALL DW 8
+
+;-------------------------MAIN MENU---------------
+XCORD DW 100
+YCORD DW  35
+STARTGAME   DB "START GAME",'$'
+INSTRUCTION DB "INSTRUCTION$"
+SCOREBOARD  DB "SCORE BOARD$"
+ESCC		DB "ESC->EXIT$"
+
+; ------------------------ LOSE PAGE ------------
+GAMEOVER DB "GAME OVER",'$'
+
+LOSERETURN DB "PRESS ANY KEY$"
+	
+
+LOOSEEMOJI		DB 11,11,11,11,11,11,11,6H,6H,6H,6H,11,11,11,11,11,11,11
+				DB 11,11,11,11,11,11,6H,6H,6H,6H,6H,6H,11,11,11,11,11,11
+				DB 11,11,11,11,11,6H,6H,6H,6H,6H,6H,6H,6H,11,11,11,11,11
+				DB 11,11,11,11,6H,6H,6H,6H,6H,6H,6H,6H,6H,6H,11,11,11,11
+				DB 11,11,11,6H,0H,0H,6H,6H,6H,6H,6H,6H,0H,0H,6H,11,11,11
+				DB 11,11,6H,6H,6H,15,0H,6H,6H,6H,6H,0H,15,6H,6H,6H,11,11
+				DB 11,11,6H,6H,6H,15,0H,0H,0H,0H,0H,0H,15,6H,6H,6H,11,11
+				DB 11,6H,6H,6H,6H,15,0H,15,6H,6H,15,0H,15,6H,6H,6H,6H,11
+				DB 11,6H,6H,6H,6H,15,15,15,6H,6H,15,15,15,6H,6H,6H,6H,11
+				DB 11,6H,6H,6H,6H,6H,6H,6H,6H,6H,6H,6H,6H,6H,6H,6H,6H,11
+				DB 11,11,6H,6H,6H,6H,15,15,15,15,15,15,6H,6H,6H,6H,11,11
+				DB 11,11,11,11,11,15,15,15,15,15,15,15,15,11,11,11,11,11
+				DB 11,11,11,11,11,15,15,15,15,15,15,15,15,11,11,11,11,11
+				DB 11,11,11,11,11,11,11,15,15,15,15,11,11,11,11,11,11,11
+
+
+; ----------------- INSTRUCTION -----------------------------------
+INST1 DB "RIGHT_ARROW   TO MOVE PADDLE RIGHT$"
+INST2 DB "LEFT_ARROW    TO MOVE PADDLE LEFT$"
+INST3 DB "FIX BRICKS ARE BLUE$"
+INST4 DB "SPECIAL BRICKS ARE RED$"
+INST5 DB "PRESS ANY KEY TO BACK$"
+
+
+
+
+
+.CODE
+; ------------------------MACRO-----------------
+ASSIGNBOX MACRO OBJ, XSTART, YSTART, XEND, YEND,BOXCOLOUR, BOXHITS, BOXSPECIAL, BOXFIXED
+MOV OBJ.X_START, XSTART
+MOV OBJ.Y_START, YSTART
+MOV OBJ.X_END, XEND
+MOV OBJ.Y_END, YEND
+MOV OBJ.COLOUR,BOXCOLOUR
+MOV OBJ.HITS, BOXHITS
+MOV OBJ.SPECIAL, BOXSPECIAL
+MOV OBJ.FIXED, BOXFIXED
+ENDM
+
+
+MAKEBOXES MACRO XSTART, YSTART, XEND, YEND, COLOUR
+	
+	MOV CX, XSTART
+	.WHILE CX < XEND
+		MOV DX, YSTART
+		.WHILE DX < YEND
+			MOV AL,COLOUR
+			CALL DRAWPOINT
+		.ENDW
+		INC CX
+	.ENDW
+ENDM
+
+RAND MACRO BOUND
+    MOV AH, 0 
+    INT 1AH
+    
+    MOV AX, DX
+    MOV DX, 0
+    MOV BX, BOUND
+    DIV BX
+    MOV RANDNUM, DL
+ENDM
+
+BACK MACRO _COUNTER,_YSTART,_YEND,_XSTART,_XEND
+		
+	.WHILE ( _COUNTER < 7 )
+		MAKEBOXES _XSTART,_YSTART,_XEND,_YEND,8
+		MOV AX,_XEND
+		MOV _XSTART,AX
+		ADD _XSTART,7
+		MOV AX, 0
+		MOV AX, _XSTART
+		MOV _XEND, AX
+		ADD _XEND,40
+		INC _COUNTER
+	.ENDW
+ENDM
+DRAWPIXEL MACRO ROW, COL, COLOR
+	MOV AH, 0CH
+	MOV AL, COLOR
+	MOV CX, COL
+	MOV DX, ROW			
+	INT 10H
+ENDM
+
+DRAWOBJECT MACRO YCOORD, XCOORD, LENY, LENX, ARRAY
+	PUSH AX
+	MOV AX, YCOORD 
+	MOV ROW_NO, AX
+	POP AX
+	MOV CX, LENY 
+	MOV SI, 0
+	.REPEAT
+		PUSH CX
+		MOV CX, LENX
+		PUSH AX
+		MOV AX, XCOORD
+		MOV COL_NO, AX
+		POP AX
+		MOV BX, 0
+		.REPEAT
+			PUSH CX
+			CMP ARRAY[SI+ BX],0
+			DRAWPIXEL ROW_NO, COL_NO, ARRAY[SI+ BX]
+			INC COL_NO
+			INC BX
+			POP CX
+			DEC CX
+		.UNTIL (CX==0)
+		ADD SI, LENX
+		INC ROW_NO
+		POP CX
+		DEC CX
+	.UNTIL (CX==0)
+ENDM
+
+;WRAPPER MACRO FOR DRAWING HEART
+DRAWEMOJI MACRO YCOORD,XCOORD,EMOJI
+	DRAWOBJECT YCOORD,XCOORD,HEART_DIM_X,HEART_DIM_Y,EMOJI
+ENDM
+
+DRAWBALL MACRO YCOORD,XCOORD
+	DRAWOBJECT YCOORD,XCOORD,DIM_X_BALL,DIM_Y_BALL,BALLARRAY
+ENDM
+
+DRAWMAINBALL MACRO ARRAY
+DRAWOBJECT MAINBALL.Y_START,MAINBALL.X_START,DIM_X_BALL,DIM_Y_BALL,ARRAY
+ENDM
+
+HIGHLIGHTMENU MACRO COLOUR, X, Y
+	MOV AH, 0CH
+	MOV AL, COLOUR ;COLOUR
+	MOV CX,X ; X AXIS
+	MOV DX,Y ; YAXIS
+	INT 10H
+	.IF ( Y > 30 && Y < 60 )
+		MAKEBOXES 63,30,250,60,1
+		CALL PRINT
+		MAKEBOXES  131, 55, 180, 59, 2 ; PADDLE
+		DRAWBALL  50, 151 ; BALL 
+	.ELSE
+		MAKEBOXES 63,30,250,60,11
+		CALL PRINT
+		MAKEBOXES  131, 55, 180, 59, 1 ; PADDLE
+		DRAWBALL  50, 151 ; BALL 
+		
+	.ENDIF
+	
+	.IF ( Y > 62 && Y < 92 )
+		MAKEBOXES 63,62,250,92,1
+		CALL PRINT
+		MAKEBOXES  131, 87, 180, 91, 2; PADDLE
+		DRAWBALL  82, 151 ; BALL 
+	.ELSE
+		MAKEBOXES 63,62,250,92,11
+		CALL PRINT
+		MAKEBOXES  131, 87, 180, 91, 1 ; PADDLE
+		DRAWBALL  82, 151 ; BALL 
+	.ENDIF
+	
+	.IF ( Y > 94 && Y < 124 )
+		MAKEBOXES 63,94,250,124,1
+		MAKEBOXES  131, 119, 180, 123, 2 ; PADDLE
+		DRAWBALL  114, 151 ; BALL 
+		CALL PRINT
+	.ELSE
+		MAKEBOXES 63,94,250,124,11
+		CALL PRINT
+		MAKEBOXES  131, 119, 180, 123, 1 ; PADDLE
+		DRAWBALL  114, 151 ; BALL 
+	.ENDIF
+	
+	.IF ( Y > 126 && Y < 156 )
+		MAKEBOXES 63,126,250,156,1
+		CALL PRINT
+		MAKEBOXES 131, 151, 180, 155, 2 ; PADDLE
+		DRAWBALL  146, 151 ; BALL 
+	.ELSE
+		MAKEBOXES 63,126,250,156,11
+		CALL PRINT
+		MAKEBOXES 131, 151, 180, 155, 1 ; PADDLE
+		DRAWBALL  146, 151 ; BALL 
+	.ENDIF
+	
+ENDM
+ 
+
+MAKEBALL MACRO XSTART, YSTART, XEND, YEND , COLOUR
+	MOV CX, XSTART
+	.WHILE CX < XEND
+		MOV DX , YSTART
+		.WHILE DX < YEND
+			MOV AH,0CH
+			MOV AL, COLOUR
+			INT 10H
+			INC DX
+		.ENDW
+		INC CX
+	.ENDW
+ENDM
+
+OUTPUTCHAR MACRO CHAR
+	MOV AH,02H
+	MOV DL, CHAR
+	INT 21H
+ENDM
+
+OUTPUT MACRO XSTART1, YSTART1, XEND1, YEND1
+	MOV CX, XSTART1
+	.WHILE CX < XEND1
+		MOV DX < YSTART1
+		.WHILE DX < YEND1
+			MOV AH,0CH
+			MOV AL, 6CH
+			INT 10H
+			INC DX
+		.ENDW
+		INC CX
+
+	.ENDW
+ENDM
+
+MOVEPADDLE MACRO
+	
+	
+	MOV AH,01H
+	INT 16H
+	JZ L0
+	JNZ L9
+
+L9:
+	MOV AH, 00H
+	INT 16H
+
+	CMP AL, 27
+	JE PAUSELOOP
+
+	CMP AH, 4BH
+	JE LEFT
+
+	CMP AH, 4DH
+	JE RIGHT
+	
+	JMP L0
+
+LEFT:
+	CMP PLAYER1.X_START,5
+	JB L0
+	MAKEBOXES PLAYER1.X_START, PLAYER1.Y_START, PLAYER1.X_END, PLAYER1.Y_END, BGCOLOUR
+	MOV AX, PLAYER1.SPEED
+	SUB PLAYER1.X_START,AX
+	SUB PLAYER1.X_END,AX
+	JMP L0
+	
+
+RIGHT:
+	CMP PLAYER1.X_END,315
+	JA L0
+	MAKEBOXES PLAYER1.X_START, PLAYER1.Y_START, PLAYER1.X_END, PLAYER1.Y_END, BGCOLOUR
+	MOV AX, PLAYER1.SPEED
+	ADD PLAYER1.X_START,AX
+	ADD PLAYER1.X_END,AX
+	JMP L0
+PAUSELOOP::
+	CALL PAUSESTATE
+ENDPAUSE::
+	CALL RESUMEGAME
+L0:	
+	MAKEBOXES PLAYER1.X_START, PLAYER1.Y_START, PLAYER1.X_END, PLAYER1.Y_END, PLAYER1.COLOUR
+ENDM
+	
+
+DELAY MACRO TIME
+
+    MOV CX, 0
+    .WHILE CX < TIME
+        INC CX
+    .ENDW
+
+ENDM
+
+
+
+
+HEART MACRO COLOUR
+    MOV AH,09        
+    MOV AL,003H      ; HEART ASCII
+    MOV BH, 0
+    MOV BL, COLOUR      ; PAGE 0, COLOR 4
+    MOV CX,0001   
+    INT 10H        
+
+ENDM
+
+SETCURSOR MACRO ROW, COLUMN
+
+    MOV AH, 02H
+    MOV DH, ROW
+    MOV DL, COLUMN
+    MOV BH, 0
+    INT 10H
+
+ENDM
+
+DISPLAYSCORE MACRO
+	SETCURSOR 0,32
+	MOV AX, SCORE
+	CALL DISPLAYINTEGER
+ENDM
+
+DISPLAYTIME MACRO 
+	CALL TIMER
+	SETCURSOR 0,18
+	MOV AX, GAMETIME
+	.IF GAMETIME < 100
+		OUTPUTCHAR '0'
+		MOV AX,GAMETIME
+	.ENDIF
+	CALL DISPLAYINTEGER
+ENDM
+
+DISPLAYLIVES MACRO
+	CMP LIVES,0
+	JLE NOLIVES
+	MOV INDEX, 6H
+	MOV CX,LIVES
+	HEARTLOOP:
+		PUSH CX
+		SETCURSOR 0, INDEX
+		HEART 04H
+		INC INDEX
+		POP CX
+	LOOP HEARTLOOP
+	
+	MOV CX,3
+	SUB CX, LIVES
+	CMP CX,0
+	JE NOLIVES
+	MOV INDEX,8H
+	HEARTBREAKLOOP:
+		PUSH CX
+		SETCURSOR 0, INDEX
+		HEART 00H
+		DEC INDEX
+		POP CX	
+	LOOP HEARTBREAKLOOP
+	
+	NOLIVES:
+	
+ENDM
+
+DISPLAYTEXT MACRO STRING
+    MOV DX, 0
+    MOV AL, 0
+    MOV AH, 09H
+    MOV DX, OFFSET STRING
+    INT 21H
+
+ENDM
+
+PRINTPAUSE MACRO COLOUR, X, Y
+	MOV AH, 0CH
+	MOV AL, COLOUR ;COLOUR
+	MOV CX,X ; X AXIS
+	MOV DX,Y ; YAXIS
+	INT 10H
+	.IF ( Y > 69 && Y < 101)
+		MAKEBOXES 78,70,217,100,1
+		CALL RESUME
+	.ELSE
+		MAKEBOXES 78,70,217,100,11
+		CALL RESUME
+	.ENDIF
+	.IF ( Y > 134 && Y < 180 )
+		MAKEBOXES 78,134,217,164,1
+		CALL RESUME
+	.ELSE
+		MAKEBOXES 78,134,217,164,11
+		CALL RESUME
+	.ENDIF
+ENDM
+
+
+
+
+
+
+
+; ----------------------- MAIN -----------------
+MAIN PROC
+MOV AX,@DATA
+MOV DS,AX
+MOV AX,0
+MOV AL, 13H
+INT 10H
+
+CALL TITLESCREEN
+GAMELOOP::
+CALL NEWGAMEASSIGN
+CALL MAKEGAME
+CALL CREATELEVEL1
+INFINITE:
+	DISPLAYLIVES
+	DISPLAYSCORE
+	DISPLAYTIME
+	CALL BALLMOVEMENT
+	MOVEPADDLE
+JMP INFINITE
+
+EXIT::
+MOV AH, 04CH
+INT 21H
+MAIN ENDP
+
+; --------------------- PROCS ------------------------------
+
+DISPLAYINTEGER PROC 
+	MOV BX, 10     ;INITIALIZES DIVISOR
+    MOV DX, 0000H    ;CLEARS DX
+    MOV CX, 0000H    ;CLEARS CX
+    
+          ;SPLITTING PROCESS STARTS HERE
+DLOOP1:  
+	MOV DX, 0000H    ;CLEARS DX DURING JUMP
+    DIV BX      ;DIVIDES AX BY BX
+    PUSH DX     ;PUSHES DX(REMAINDER) TO STACK
+    INC CX      ;INCREMENTS COUNTER TO TRACK THE NUMBER OF DIGITS
+    CMP AX, 0     ;CHECKS IF THERE IS STILL SOMETHING IN AX TO DIVIDE
+    JNE DLOOP1     ;JUMPS IF AX IS NOT ZERO
+    
+DLOOP2:  
+	POP DX      ;POPS FROM STACK TO DX
+    ADD DX, '0'     ;CONVERTS TO IT'S ASCII EQUIVALENT
+	MOV AH, 02H     
+    INT 21H      ;CALLS DOS TO DISPLAY CHARACTER
+    LOOP DLOOP2    ;LOOPS TILL CX EQUALS ZERO
+RET
+DISPLAYINTEGER ENDP
+
+DRAWPOINT PROC
+	MOV AH, 0CH
+	INT 10H
+	INC DX
+RET
+DRAWPOINT ENDP
+
+BALLMOVEMENT PROC 
+	;MAKEBALL MAINBALL.X_START, MAINBALL.Y_START, MAINBALL.X_END , MAINBALL.Y_END, BGCOLOUR
+	DRAWMAINBALL NULLBALL
+	
+	MOV AX, MAINBALL.X_SPEED
+	ADD MAINBALL.X_START, AX
+	ADD MAINBALL.X_END, AX
+	
+	MOV AX, MAINBALL.Y_SPEED
+	ADD MAINBALL.Y_START,AX
+	ADD MAINBALL.Y_END, AX
+	;CHECK FOR UP COLLISIONS
+	.IF MAINBALL.Y_START <= 17
+		NEG MAINBALL.Y_SPEED
+		 
+		JMP SIDES
+	.ELSE
+		.IF LEVEL1BOOL == 1
+		FOR I, <B111,B112,B113,B114,B115,B116,B117,B118,B119,B121,B122,B123,B124,B125,B126,B127>
+			MOV AL, I.COLOUR
+			MOV BX, MAINBALL.Y_START
+			MOV CX, MAINBALL.X_START
+			MOV DX, MAINBALL.X_END
+			.IF AL != BGCOLOUR && BX == I.Y_END
+				.IF (CX >= I.X_START && CX <= I.X_END) || (DX >= I.X_START && DX <= I.X_END)
+					NEG MAINBALL.Y_SPEED
+					DEC I.HITS
+					.IF I.HITS == 0
+						MOV AL, BGCOLOUR
+						MOV I.COLOUR, AL
+						MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+						DEC CURRENTBRICKS
+					.ELSE 
+						ADD I.COLOUR, 3 
+					.ENDIF
+					INC SCORE
+					 
+					JMP SIDES
+				.ENDIF
+			.ENDIF
+		ENDM
+		.ELSEIF LEVEL2BOOL == 1
+		FOR I, <L11,L12,L13,L14,L15,L16,L17,L18,L19,L20,L21,L22,L23,L24,L25,L26,L27,L28,L29,L30,L31,L32,L33,L34,L35,L36,L37,L38,L39,L40,L41,L42,L43,L44>
+			MOV AL, I.COLOUR
+			MOV BX, MAINBALL.Y_START
+			MOV CX, MAINBALL.X_START
+			MOV DX, MAINBALL.X_END
+			.IF AL != BGCOLOUR && BX == I.Y_END
+				.IF (CX >= I.X_START && CX <= I.X_END) || (DX >= I.X_START && DX <= I.X_END)
+					NEG MAINBALL.Y_SPEED
+					DEC I.HITS
+					.IF I.HITS == 0
+						MOV AL, BGCOLOUR
+						MOV I.COLOUR, AL
+						DEC CURRENTBRICKS
+					.ELSE 
+						ADD I.COLOUR, 3 
+					.ENDIF
+					MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+					INC SCORE
+					 
+					JMP SIDES
+				.ENDIF
+			.ENDIF
+		ENDM
+		.ELSEIF LEVEL3BOOL == 1
+		FOR I, <C31, C32 , C33, C34, C35, C36, C36, C37, C38, C39, C40,C41, C45, C46, C47,C51, C52, C53, C54,C59, C60,C63, C64, C65, NEW1, NEW2, NEW3>
+			MOV AL, I.COLOUR
+			MOV BX, MAINBALL.Y_START
+			MOV CX, MAINBALL.X_START
+			MOV DX, MAINBALL.X_END
+			.IF AL != BGCOLOUR && BX == I.Y_END
+				.IF (CX >= I.X_START && CX <= I.X_END) || (DX >= I.X_START && DX <= I.X_END)
+					NEG MAINBALL.Y_SPEED
+					.IF I.FIXED != 1
+						DEC I.HITS
+						.IF I.HITS == 0
+							MOV AL, BGCOLOUR
+							MOV I.COLOUR, AL
+							DEC CURRENTBRICKS
+						.ELSE 
+							ADD I.COLOUR, 3 	
+						.ENDIF
+						MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+						INC SCORE
+					.ENDIF
+					 
+					JMP SIDES
+				.ENDIF
+			.ENDIF
+		ENDM
+		.ENDIF
+		
+	.ENDIF
+	
+	;CHECK FOR DOWN COLLISIONS
+	.IF MAINBALL.Y_END >= 198
+		MOV AX, PLAYER1.X_START
+		MOV BX, PLAYER1.Y_START
+		ADD AX,15
+		SUB BX,15
+		MOV CX,AX
+		ADD CX,10
+		MOV DX,BX
+		ADD DX,10
+		MOV MAINBALL.X_START,AX
+		MOV MAINBALL.Y_START,BX
+		MOV MAINBALL.X_END,CX
+		MOV MAINBALL.Y_END,DX
+		MOV MAINBALL.X_SPEED, 1 
+		MOV MAINBALL.Y_SPEED, 1
+		DEC LIVES
+		 
+		JMP SIDES
+	.ELSE
+		MOV BX, MAINBALL.Y_END
+		MOV CX, MAINBALL.X_START
+		MOV DX, MAINBALL.X_END
+		.IF BX == PLAYER1.Y_START
+			.IF (CX >= PLAYER1.X_START && CX <= PLAYER1.X_END) || (DX >= PLAYER1.X_START && DX <= PLAYER1.X_END)
+				NEG MAINBALL.Y_SPEED
+				 
+				JMP SIDES
+			.ENDIF	
+		.ELSEIF LEVEL1BOOL == 1
+		FOR I, <B111,B112,B113,B114,B115,B116,B117,B118,B119,B121,B122,B123,B124,B125,B126,B127>
+			MOV AL, I.COLOUR
+			MOV AH,0
+			MOV BX, MAINBALL.Y_END
+			MOV CX, MAINBALL.X_START
+			MOV DX, MAINBALL.X_END
+			.IF AL != BGCOLOUR && BX == I.Y_START
+				.IF (CX >= I.X_START && CX <= I.X_END) || (DX >= I.X_START && DX <= I.X_END)
+					NEG MAINBALL.Y_SPEED
+					DEC I.HITS
+					.IF I.HITS == 0
+						MOV AL, BGCOLOUR
+						MOV I.COLOUR, AL
+						MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,BGCOLOUR
+						DEC CURRENTBRICKS
+					.ELSE 
+						ADD I.COLOUR, 3 	
+					.ENDIF
+					INC SCORE
+					 
+					JMP SIDES
+				.ENDIF
+			.ENDIF
+		ENDM
+		.ELSEIF LEVEL2BOOL == 1
+		FOR I, <L11,L12,L13,L14,L15,L16,L17,L18,L19,L20,L21,L22,L23,L24,L25,L26,L27,L28,L29,L30,L31,L32,L33,L34,L35,L36,L37,L38,L39,L40,L41,L42,L43,L44>
+			MOV AL, I.COLOUR
+			MOV BX, MAINBALL.Y_END
+			MOV CX, MAINBALL.X_START
+			MOV DX, MAINBALL.X_END
+			.IF AL != BGCOLOUR && BX == I.Y_START
+				.IF (CX >= I.X_START && CX <= I.X_END) || (DX >= I.X_START && DX <= I.X_END)
+					NEG MAINBALL.Y_SPEED
+					DEC I.HITS
+					.IF I.HITS == 0
+						MOV AL, BGCOLOUR
+						MOV I.COLOUR, AL
+						DEC CURRENTBRICKS
+					.ELSE 
+						ADD I.COLOUR, 3 
+					.ENDIF
+					MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+					INC SCORE
+					 
+					JMP SIDES
+				.ENDIF
+			.ENDIF
+		ENDM
+		.ELSEIF LEVEL3BOOL == 1
+		FOR I, <C31, C32 , C33, C34, C35, C36, C36, C37, C38, C39, C40,C41, C45, C46, C47,C51, C52, C53, C54,C59, C60,C63, C64, C65, NEW1, NEW2, NEW3>
+			MOV AL, I.COLOUR
+			MOV BX, MAINBALL.Y_END
+			MOV CX, MAINBALL.X_START
+			MOV DX, MAINBALL.X_END
+			.IF AL != BGCOLOUR && BX == I.Y_START
+				.IF (CX >= I.X_START && CX <= I.X_END) || (DX >= I.X_START && DX <= I.X_END)
+					NEG MAINBALL.Y_SPEED
+					.IF I.FIXED != 1
+						DEC I.HITS
+						.IF I.HITS == 0
+							MOV AL, BGCOLOUR
+							MOV I.COLOUR, AL
+							DEC CURRENTBRICKS
+						.ELSE 
+							ADD I.COLOUR, 3 	
+						.ENDIF
+						MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+						INC SCORE
+					.ENDIF
+					 
+					JMP SIDES
+				.ENDIF
+			.ENDIF
+		ENDM
+		.ENDIF
+	
+	JMP SIDESNOHIT
+	SIDES:
+	MOV SOUNDBOOL,1
+	SIDESNOHIT:
+	;CHECK FOR LEFT COLLISIONS
+	.IF MAINBALL.X_START <= 2
+		NEG MAINBALL.X_SPEED
+		 
+		JMP BREAK
+	.ELSE
+		.IF LEVEL1BOOL == 1
+		FOR I, <B111,B112,B113,B114,B115,B116,B117,B118,B119,B121,B122,B123,B124,B125,B126,B127>
+			MOV AL, I.COLOUR
+			MOV BX, MAINBALL.X_START
+			MOV CX, MAINBALL.Y_START
+			MOV DX, MAINBALL.Y_END
+			.IF AL != BGCOLOUR && BX == I.X_END
+				.IF (CX >= I.Y_START && CX <= I.Y_END) || (DX >= I.Y_START && DX <= I.Y_END)
+					NEG MAINBALL.X_SPEED
+					DEC I.HITS
+					.IF I.HITS == 0
+						MOV AL, BGCOLOUR
+						MOV I.COLOUR, AL
+						MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,BGCOLOUR
+						DEC CURRENTBRICKS
+					.ENDIF
+					INC SCORE
+					 
+					JMP BREAK
+				.ENDIF
+			.ENDIF
+		ENDM
+		
+		.ELSEIF LEVEL2BOOL == 1
+		FOR I, <L11,L12,L13,L14,L15,L16,L17,L18,L19,L20,L21,L22,L23,L24,L25,L26,L27,L28,L29,L30,L31,L32,L33,L34,L35,L36,L37,L38,L39,L40,L41,L42,L43,L44>
+			MOV AL, I.COLOUR
+			MOV BX, MAINBALL.X_START
+			MOV CX, MAINBALL.Y_START
+			MOV DX, MAINBALL.Y_END
+			.IF AL != BGCOLOUR && BX == I.X_END
+				.IF (CX >= I.Y_START && CX <= I.Y_END) || (DX >= I.Y_START && DX <= I.Y_END)
+					NEG MAINBALL.X_SPEED
+					DEC I.HITS
+					.IF I.HITS == 0
+						MOV AL, BGCOLOUR
+						MOV I.COLOUR, AL
+						DEC CURRENTBRICKS
+					.ELSE 
+						ADD I.COLOUR, 3 
+					.ENDIF
+					MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+					INC SCORE
+					
+					JMP BREAK
+				.ENDIF
+			.ENDIF
+		ENDM
+		
+		.ELSEIF LEVEL3BOOL == 1
+			FOR I,  <C31, C32 , C33, C34, C35, C36, C36, C37, C38, C39, C40,C41, C45, C46, C47,C51, C52, C53, C54,C59, C60,C63, C64, C65, NEW1, NEW2, NEW3>
+			MOV AL, I.COLOUR
+			MOV BX, MAINBALL.X_START
+			MOV CX, MAINBALL.Y_START
+			MOV DX, MAINBALL.Y_END
+			.IF AL != BGCOLOUR && BX == I.X_END
+				.IF (CX >= I.Y_START && CX <= I.Y_END) || (DX >= I.Y_START && DX <= I.Y_END)
+					NEG MAINBALL.X_SPEED
+					.IF I.FIXED != 1
+						DEC I.HITS
+						.IF I.HITS == 0
+							MOV AL, BGCOLOUR
+							MOV I.COLOUR, AL
+							DEC CURRENTBRICKS
+						.ELSE 
+							ADD I.COLOUR, 3 	
+						.ENDIF
+						MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+						INC SCORE
+					.ENDIF
+					
+					JMP BREAK
+				.ENDIF
+			.ENDIF
+			ENDM
+		.ENDIF
+	.ENDIF
+	
+	; CHECK FOR RIGHT COLLISIONS
+	.IF MAINBALL.X_END >= 318
+		NEG MAINBALL.X_SPEED
+		
+		JMP BREAK
+	 
+	.ELSE
+		.IF LEVEL1BOOL == 1
+		FOR I, <B111,B112,B113,B114,B115,B116,B117,B118,B119,B121,B122,B123,B124,B125,B126,B127>
+			MOV AL, I.COLOUR
+			MOV BX, MAINBALL.X_END
+			MOV CX, MAINBALL.Y_START
+			MOV DX, MAINBALL.Y_END
+			.IF AL != BGCOLOUR && BX == I.X_START
+				.IF (CX >= I.Y_START && CX <= I.Y_END) || (DX >= I.Y_START && DX <= I.Y_END)
+					NEG MAINBALL.X_SPEED
+					DEC I.HITS
+					.IF I.HITS == 0
+						MOV AL, BGCOLOUR
+						MOV I.COLOUR, AL
+						MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,BGCOLOUR
+						DEC CURRENTBRICKS
+					.ENDIF
+					INC SCORE
+					 
+					JMP BREAK
+				.ENDIF
+			.ENDIF
+		ENDM
+		
+		.ELSEIF LEVEL2BOOL == 1
+		FOR I, <L11,L12,L13,L14,L15,L16,L17,L18,L19,L20,L21,L22,L23,L24,L25,L26,L27,L28,L29,L30,L31,L32,L33,L34,L35,L36,L37,L38,L39,L40,L41,L42,L43,L44>
+			MOV AL, I.COLOUR
+			MOV BX, MAINBALL.X_START
+			MOV CX, MAINBALL.Y_START
+			MOV DX, MAINBALL.Y_END
+			.IF AL != BGCOLOUR && BX == I.X_START
+				.IF (CX >= I.Y_START && CX <= I.Y_END) || (DX >= I.Y_START && DX <= I.Y_END)
+					NEG MAINBALL.X_SPEED
+					DEC I.HITS
+					.IF I.HITS == 0
+						MOV AL, BGCOLOUR
+						MOV I.COLOUR, AL
+						DEC CURRENTBRICKS
+					.ELSE 
+						ADD I.COLOUR, 3 
+					.ENDIF
+					MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+					INC SCORE
+					 
+					JMP BREAK
+				.ENDIF
+			.ENDIF
+		ENDM
+		
+		.ELSEIF LEVEL3BOOL == 1
+		FOR I, <C31, C32 , C33, C34, C35, C36, C36, C37, C38, C39, C40,C41, C45, C46, C47,C51, C52, C53, C54,C59, C60,C63, C64, C65, NEW1, NEW2, NEW3>
+			MOV AL, I.COLOUR
+			MOV BX, MAINBALL.X_END
+			MOV CX, MAINBALL.Y_START
+			MOV DX, MAINBALL.Y_END
+			.IF AL != BGCOLOUR && BX == I.X_START
+				.IF (CX >= I.Y_START && CX <= I.Y_END) || (DX >= I.Y_START && DX <= I.Y_END)
+					NEG MAINBALL.X_SPEED
+					.IF I.FIXED != 1
+						DEC I.HITS
+						.IF I.HITS == 0
+							MOV AL, BGCOLOUR
+							MOV I.COLOUR, AL
+							DEC CURRENTBRICKS
+						.ELSE 
+							ADD I.COLOUR, 3 	
+						.ENDIF
+						MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+						INC SCORE
+					.ENDIF
+					 
+					JMP BREAK
+				.ENDIF
+			.ENDIF
+		ENDM
+		.ENDIF
+		
+	.ENDIF
+	.ENDIF
+	JMP BREAKNOHIT
+	BREAK:
+	MOV SOUNDBOOL,1
+	BREAKNOHIT:
+	DRAWMAINBALL BALLARRAY
+	.IF SOUNDBOOL == 1
+		CALL PLAYSOUND
+		MOV SOUNDBOOL,0
+	.ENDIF
+	
+	.IF CURRENTBRICKS == 0
+		CALL NEXTLEVEL
+	.ENDIF
+	
+	 .IF LEVEL3BOOL == 1
+		CALL SPECIALBRICK
+	 .ENDIF
+	
+	.IF LIVES == 0 || GAMETIME == 0
+		CALL LOSEPAGE
+	.ENDIF
+	;MAKEBALL MAINBALL.X_START, MAINBALL.Y_START, MAINBALL.X_END , MAINBALL.Y_END, MAINBALL.COLOUR
+	DELAY GAMESPEED
+RET
+BALLMOVEMENT ENDP
+
+
+SPECIALBRICK PROC
+	MOV STRUCTSIZE, SIZEOF C31
+	MOV SI, OFFSET C31
+	MOV DI, OFFSET C64
+	ADD DI, STRUCTSIZE
+	MOV DX,0
+	FOR I, <C31, C32 , C33, C34, C35, C36, C36, C37, C38, C39, C40,C41, C45, C46, C47,C51, C52, C53, C54,C59, C60,C63, C64, C65, NEW1, NEW2, NEW3>
+		.IF I.SPECIAL == 1 && I.HITS == 0
+			MOV I.SPECIAL,0
+			MOV CX,0
+			.WHILE CX < 5 && CL < CURRENTBRICKS
+				MOV BX,0
+				MOV AL,0
+				.WHILE BX == 0 && AL == 0
+					ADD SI, STRUCTSIZE
+					INC AL
+					.IF SI >= DI
+						MOV SI, OFFSET C31
+					.ENDIF
+					MOV BX, WORD PTR [SI+9] ; SI+9 = HITS
+					MOV AL,[SI+11]
+				.ENDW
+				
+				MOV BX,0
+				MOV [SI+9], BX
+				MOV AL, BGCOLOUR
+				MOV [SI+8], AL ; SI + 8 = COLOUR
+				MOV AH,0
+				MOV [SI+11],AH
+				DEC CURRENTBRICKS
+				MOV DX,1
+				INC CX
+			.ENDW
+		.ENDIF
+	ENDM
+	.IF DX != 0
+		FOR I,<C31, C32 , C33, C34, C35, C36, C36, C37, C38, C39, C40,C41, C45, C46, C47,C51, C52, C53, C54,C59, C60,C63, C64, C65, NEW1, NEW2, NEW3>
+		MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+		ENDM
+		ADD SCORE, 15
+	.ENDIF
+	
+RET	
+SPECIALBRICK ENDP
+
+NEXTLEVEL PROC
+	INC LEVEL1BOOL
+	.IF LEVEL2BOOL == 0
+		INC LEVEL2BOOL
+		CALL CREATELEVEL2
+	.ELSEIF LEVEL3BOOL == 0
+		INC LEVEL2BOOL
+		INC LEVEL3BOOL
+		CALL CREATELEVEL3
+	.ELSE	
+		CALL WINNERPAGE
+		JMP EXIT
+	.ENDIF
+RET
+NEXTLEVEL ENDP
+
+CREATELEVEL1 PROC
+	MOV GAMESPEED,10000
+	MOV LEVEL2BOOL, 0
+	MOV LEVEL3BOOL,0
+	MOV LIVES, 3
+	MOV GAMETIME,241
+	MOV SCORE,0
+	MOV LEVEL1BOOL, 1
+	FOR I, <B111,B112,B113,B114,B115,B116,B117,B118,B119,B121,B122,B123,B124,B125,B126,B127>
+	MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+	DELAY 50000
+	ENDM
+	MOV CURRENTBRICKS, 16
+RET
+CREATELEVEL1 ENDP
+
+CREATELEVEL2 PROC
+	CALL MAKEGAME
+	MOV LEVEL1BOOL, 2
+	MAKEBOXES PLAYER1.X_START, PLAYER1.Y_START, PLAYER1.X_END, PLAYER1.Y_END, BGCOLOUR
+	MOV GAMETIME,241
+	MOV PLAYER1.X_START,140
+	MOV PLAYER1.Y_START,190
+	MOV PLAYER1.X_END,200
+	MOV PLAYER1.Y_END,195	
+	MOV AX, PLAYER1.X_START
+	MOV BX, PLAYER1.Y_START
+	ADD AX,15
+	SUB BX,15
+	MOV CX,AX
+	ADD CX,10
+	MOV DX,BX
+	ADD DX,10
+	MOV MAINBALL.X_START,AX
+	MOV MAINBALL.Y_START,BX
+	MOV MAINBALL.X_END,CX
+	MOV MAINBALL.Y_END,DX
+	MOV MAINBALL.X_SPEED, 1 
+	MOV MAINBALL.Y_SPEED, 1
+	FOR I, <L11,L12,L13,L14,L15,L16,L17,L18,L19,L20,L21,L22,L23,L24,L25,L26,L27,L28,L29,L30,L31,L32,L33,L34,L35,L36,L37,L38,L39,L40,L41,L42,L43,L44>
+	MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+	DELAY 50000
+	ENDM
+	SUB GAMESPEED,1000
+	MOV CURRENTBRICKS, 34
+	MOV CURRENTTIME,241
+RET
+CREATELEVEL2 ENDP
+
+CREATELEVEL3 PROC
+	CALL MAKEGAME
+	MAKEBOXES PLAYER1.X_START, PLAYER1.Y_START, PLAYER1.X_END, PLAYER1.Y_END, BGCOLOUR
+	MOV GAMETIME,241
+	MOV PLAYER1.X_START,130
+	MOV PLAYER1.Y_START,190
+	MOV PLAYER1.X_END,200
+	MOV PLAYER1.Y_END,195	
+	MOV AX, PLAYER1.X_START
+	MOV BX, PLAYER1.Y_START
+	ADD AX,15
+	SUB BX,15
+	MOV CX,AX
+	ADD CX,10
+	MOV DX,BX
+	ADD DX,10
+	MOV MAINBALL.X_START,AX
+	MOV MAINBALL.Y_START,BX
+	MOV MAINBALL.X_END,CX
+	MOV MAINBALL.Y_END,DX
+	MOV MAINBALL.X_SPEED, 1 
+	MOV MAINBALL.Y_SPEED, 1
+	FOR I, <C31, C32 , C33, C34, C35, C36, C36, C37, C38, C39, C40,C41, C45, C46, C47,C51, C52, C53, C54,C59, C60,C63, C64, C65, NEW1, NEW2, NEW3>
+	MOV I.HITS, 3
+	MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+	DELAY 50000
+	ENDM
+	MOV CURRENTTIME, 241
+	MOV CURRENTBRICKS, 26
+	SUB GAMESPEED,500
+RET
+CREATELEVEL3 ENDP
+
+
+SETBACKGROUND PROC
+	MOV AH, 06H
+	MOV AL, 0
+	MOV CX, 0
+	MOV BH, BGCOLOUR	
+	MOV DX, 6200
+	INT 10H
+RET
+SETBACKGROUND ENDP
+
+MAKEGAME PROC
+	CALL SETBACKGROUND
+
+	MAKEBOXES 0,0,320,15,00
+	SETCURSOR 0,0
+	DISPLAYTEXT LIVESSTRING
+	
+	SETCURSOR 0,12
+	DISPLAYTEXT TIMESTRING
+	
+	SETCURSOR 0,25
+	DISPLAYTEXT SCORESTRING
+RET
+MAKEGAME ENDP
+
+
+RESUMEGAME PROC
+	CALL MAKEGAME
+	.IF LEVEL3BOOL == 1
+		FOR I, <C31, C32 , C33, C34, C35, C36, C36, C37, C38, C39, C40,C41, C45, C46, C47,C51, C52, C53, C54,C59, C60,C63, C64, C65, NEW1, NEW2, NEW3>
+		MAKEBOXES I.X_START,I.Y_START,I.X_END,I.Y_END,I.COLOUR
+		ENDM
+	.ELSEIF LEVEL2BOOL == 1
+		FOR J, <L11,L12,L13,L14,L15,L16,L17,L18,L19,L20,L21,L22,L23,L24,L25,L26,L27,L28,L29,L30,L31,L32,L33,L34,L35,L36,L37,L38,L39,L40,L41,L42,L43,L44>
+		MAKEBOXES J.X_START,J.Y_START,J.X_END,J.Y_END,J.COLOUR
+		ENDM
+	.ELSE
+		FOR K, <B111,B112,B113,B114,B115,B116,B117,B118,B119,B121,B122,B123,B124,B125,B126,B127>
+		MAKEBOXES K.X_START,K.Y_START,K.X_END,K.Y_END,K.COLOUR
+		ENDM
+	.ENDIF
+RET
+RESUMEGAME ENDP
+
+
+PAUSESTATE PROC
+	
+	MAKEBOXES 78,70,217,100,1
+	MAKEBOXES 78,134,217,164,11
+	CALL RESUME
+
+	GETINPUT:	
+		MOV AH,01H
+		INT 16H
+		JNZ KEYPRESS
+		JMP GETINPUT
+		
+	KEYPRESS:
+		MOV AH,00H
+		INT 16H
+		
+		.IF(AL == 13) 
+			.IF (PAUSEYCORD < 101 && PAUSEYCORD > 69 )
+			JMP ENTERSPAUSE
+			.ENDIF
+		.ENDIF
+		
+		.IF(AL == 13) 
+			.IF (PAUSEYCORD < 180 && PAUSEYCORD > 134 )
+			JMP ENTERS1PAUSE
+			.ENDIF
+		.ENDIF
+		
+		CMP AH, 48H
+		JE UP
+		
+		
+		CMP AH, 50H
+		JE DOWN
+		
+		CMP AL, 27H
+		JMP NEXT
+		
+		ENTERSPAUSE:
+		JMP ENDPAUSE
+		ENTERS1PAUSE:
+			CALL MAINMENU
+		JMP NEXT
+		UP:
+			PRINTPAUSE 0,PAUSEXCORD,PAUSEYCORD
+			.IF PAUSEYCORD > 70
+				SUB PAUSEYCORD, 75
+			.ENDIF
+			PRINTPAUSE 6,PAUSEXCORD,PAUSEYCORD
+			JMP NEXT
+		
+		DOWN:
+			PRINTPAUSE 0,PAUSEXCORD,PAUSEYCORD
+			.IF PAUSEYCORD < 134
+				ADD PAUSEYCORD, 75
+			.ENDIF
+			PRINTPAUSE 6,PAUSEXCORD,PAUSEYCORD
+			JMP NEXT
+	NEXT:
+	JMP GETINPUT
+RET
+PAUSESTATE ENDP
+
+
+RESUME PROC
+	MOV AH ,02H
+	MOV BX, 0
+	MOV DH ,10; MOVEMENT UP AND DOWN OF STRING PRINTING
+	MOV DL ,10 ; LEFT AND WRITE PRINTING 
+	INT 10H
+	
+	LEA DX,RES1
+	MOV AH,9H
+	INT 21H
+	
+	MOV AX, 0
+	MOV BX, 0
+	MOV CX, 0
+	MOV DX, 0
+	MOV AH ,02H
+	MOV BX, 0
+	MOV DH ,18; MOVEMENT UP AND DOWN OF STRING PRINTING
+	MOV DL ,10 ; LEFT AND WRITE PRINTING 
+	INT 10H
+	
+	LEA DX,RES2
+	MOV AH,9H
+	INT 21H
+RET
+RESUME ENDP
+
+
+TIMER PROC
+	MOV AH, 2CH
+	INT 21H
+	CMP CURRENTTIME,DH
+	JE NOCHANGE
+		MOV CURRENTTIME,DH
+		DEC GAMETIME
+	NOCHANGE:
+RET
+TIMER ENDP
+
+WINNERPAGE PROC
+	MOV AH, 06H 
+	MOV AL, 0
+	MOV BH, 0
+	MOV BL, 0
+	MOV CX,0
+	MOV DH,50
+	MOV DL,50
+	INT 10H
+	MAKEBOXES 95,70,220,100,11
+	MAKEBOXES 94,150,225,180,11
+	DRAWEMOJI 75, 100,WINEMOJI
+	DRAWEMOJI 75, 193,WINEMOJI
+	CALL WINNER
+	CALL TROPHY
+RET
+WINNERPAGE ENDP
+ 
+ WINNER PROC
+ 		MOV AH ,02H
+		MOV BX, 0
+		MOV DH ,10; MOVEMENT UP AND DOWN OF STRING PRINTING
+		MOV DL ,15 ; LEFT AND WRITE PRINTING 
+		INT 10H
+		LEA DX,GAMEWIN
+		MOV AH,9H
+		INT 21H
+		MOV AX, 0
+		MOV BX, 0
+		MOV CX, 0
+		MOV DX, 0
+		MOV AH ,02H
+		MOV BX, 0
+		MOV DH ,20; MOVEMENT UP AND DOWN OF STRING PRINTING
+		MOV DL ,12 ; LEFT AND WRITE PRINTING 
+		INT 10H
+		LEA DX,BACKTOMAIN
+		MOV AH,9H
+		INT 21H
+ RET
+ WINNER ENDP
+ 
+ TROPHY PROC
+	MAKEBOXES 130,25,150,27,14
+	MAKEBOXES 130,25,132,32,14
+	MAKEBOXES 132,29,134,32,14
+	MAKEBOXES 148,25,150,32,14
+	MAKEBOXES 146,29,148,32,14
+	MAKEBOXES 134,29,136,43,14
+	MAKEBOXES 144,29,146,43,14
+	MAKEBOXES 125,34,135,35,14
+	MAKEBOXES 146,34,154,35,14	
+	MAKEBOXES 154,34,155,41,14
+	MAKEBOXES 146,40,154,41,14
+	MAKEBOXES 125,34,126,41,14
+	MAKEBOXES 125,40,134,41,14
+	MAKEBOXES 136,43,138,45,14
+	MAKEBOXES 138,45,140,47,14
+	MAKEBOXES 142,43,144,45,14
+	MAKEBOXES 140,45,142,47,14
+	MAKEBOXES 136,45,138,54,14
+	MAKEBOXES 142,45,144,54,14
+	MAKEBOXES 130,53,138,55,14
+	MAKEBOXES 142,53,150,55,14
+	MAKEBOXES 130,53,131,58,14
+	MAKEBOXES 149,53,150,58,14
+	MAKEBOXES 127,58,153,59,6
+	MAKEBOXES 127,58,128,63,6
+	MAKEBOXES 152,58,153,63,6
+	MAKEBOXES 124,62,156,64,6
+	MAKEBOXES 155,64,159,66,6
+	MAKEBOXES 155,64,159,66,6
+	MAKEBOXES 121,64,126,66,6
+ RET
+ TROPHY ENDP
+ 
+ BACKGROUND_COLOR PROC
+
+	MOV AH,06H   ;BACKGROUND COLOR
+	MOV AL,0
+	MOV CX,0
+	MOV DX,6200
+	MOV BH,00 ; COLOR 
+	INT 10H
+	RET
+	
+	BACKGROUND_COLOR ENDP
+ 
+ TITLESCREEN PROC
+ 
+	CALL BACKGROUND_COLOR
+	
+	.WHILE( TEMP1 < 9 )
+		.IF (TEMP1 == 8)
+			ADD _YEND, 8
+			ADD _YSTART,3
+			BACK _COUNTER, _YSTART, _YEND, _XSTART, _XEND
+		.ELSE
+			BACK _COUNTER, _YSTART, _YEND, _XSTART, _XEND
+			CALL UPDATE
+		.ENDIF
+			INC TEMP1			
+	.ENDW
+	
+	
+
+
+	MAKEBOXES 110,120,235,150,11
+	MAKEBOXES 32, 18,255,70,11
+	
+	;B
+	MAKEBOXES 37, 20,40,62,1
+	
+	MAKEBOXES 40, 20,45,23,2
+	MAKEBOXES 45, 23,50,26,3
+	MAKEBOXES 50, 26,55,29,4
+	
+	MAKEBOXES 53, 29,58,32,5
+	
+	MAKEBOXES 50, 32,55,35,6
+	MAKEBOXES 45, 35,50,38,9
+	MAKEBOXES 40, 38,45,41,10
+	
+	
+	MAKEBOXES 40, 41,45,44,0
+	MAKEBOXES 45, 44,50,47,12
+	MAKEBOXES 50, 47,55,50,13
+	MAKEBOXES 53, 50,58,53,14
+	
+	
+	MAKEBOXES 50, 53,55,56,15
+	MAKEBOXES 45, 56,50,59,1
+	MAKEBOXES 40, 59,45,62,2
+	
+	;R
+	
+	MAKEBOXES 62, 35,65,62,3
+	MAKEBOXES 65, 32,69,35,4
+	MAKEBOXES 69, 29,73,32,5
+	MAKEBOXES 73, 26,79,29,6
+	MAKEBOXES 79, 29,83,32,9
+	MAKEBOXES 83, 32,87,35,10
+	
+	MAKEBOXES 65, 42,69,45,6
+	MAKEBOXES 69, 45,73,48,12
+	MAKEBOXES 73, 48,78,51,13
+	
+	MAKEBOXES 77, 45,82,48,14
+	MAKEBOXES 82, 42,87,45,15
+	
+	MAKEBOXES 83, 36,87,41,1
+	
+	MAKEBOXES 65,52,70,55,2
+	MAKEBOXES 70,55,75,58,3
+	MAKEBOXES 75,58,80,62,4
+	
+	;I
+	MAKEBOXES 98, 27,102,62,5
+	
+	MAKEBOXES 90, 27,110,29,7
+	
+	MAKEBOXES 90, 60,110,62,9
+	
+	;C
+	
+	MAKEBOXES 114, 27,116,62,10
+	MAKEBOXES 115, 27,130,30,8
+	MAKEBOXES 115, 59,130,62,12
+	
+	;K
+	MAKEBOXES 134,27,136,62,13
+	
+	MAKEBOXES 136,42,139,45,14
+	MAKEBOXES 139,39,142,42,15
+	MAKEBOXES 142,36,145,39,1
+	MAKEBOXES 145,33,148,36,2
+	MAKEBOXES 148,30,151,33,3
+	
+	MAKEBOXES 139,45,142,48,4
+	MAKEBOXES 142,48,145,51,5
+	MAKEBOXES 145,51,148,54,6
+	MAKEBOXES 148,54,151,57,9
+	
+	;B
+	
+	MAKEBOXES 158, 20,161,62,10
+	
+	MAKEBOXES 161, 20,166,23,0
+	MAKEBOXES 166, 23,171,26,12
+	MAKEBOXES 171, 26,176,29,13
+	
+	MAKEBOXES 174, 29,179,32,14
+	
+	MAKEBOXES 171, 32,176,35,15
+	MAKEBOXES 166, 35,171,38,1
+	MAKEBOXES 161, 38,166,41,2
+	
+	
+	MAKEBOXES 161, 41,166,44,3
+	MAKEBOXES 166, 44,171,47,4
+	MAKEBOXES 171, 47,176,50,5
+	
+	MAKEBOXES 174, 50,179,53,6
+	MAKEBOXES 171, 53,176,56,9
+	MAKEBOXES 166, 56,171,59,10
+	MAKEBOXES 161, 59,166,62,7
+	;A
+	MAKEBOXES 184,29,186,62,12
+	MAKEBOXES 186,29,198,32,13
+	MAKEBOXES 198,29,200,62,14
+	MAKEBOXES 186,40,198,43,15
+	
+	;L
+	
+	MAKEBOXES 207,22,209,62,1
+	MAKEBOXES 208,58,228,62,2
+	
+	;L
+	
+	MAKEBOXES 232,22,234,62,3
+	MAKEBOXES 233,58,250,62,4
+	
+
+		MOV AH ,02H
+		MOV BX, 0
+		MOV DH ,16; MOVEMENT UP AND DOWN OF STRING PRINTING
+		MOV DL ,14; LEFT AND WRITE PRINTING 
+		INT 10H
+		LEA DX,INPUTNAME
+		MOV AH,9H
+		INT 21H
+		;CARTOON
+		MAKEBOXES 80,122,100,127,6
+		MAKEBOXES 78,126,102,131,6
+		MAKEBOXES 75,131,105,141,6
+		MAKEBOXES 78,141,102,146,6
+		MAKEBOXES 75,146,105,151,6
+		MAKEBOXES 73,151,107,156,6
+		MAKEBOXES 71,156,109,161,6
+		MAKEBOXES 68,161,112,164,6
+		MAKEBOXES 100,164,108,168,6
+		MAKEBOXES 72,164,80,168,6
+		MAKEBOXES 82,164,98,172,6
+		MAKEBOXES 77,172,103,177,6
+		MAKEBOXES 73,177,88,182,6
+		MAKEBOXES 93,177,107,182,6
+		MAKEBOXES 70,182,84,188,6
+		MAKEBOXES 97,182,110,188,6
+		MAKEBOXES 80,130,84,134,0
+		MAKEBOXES 96,130,100,134,0
+		MAKEBOXES 85,140,95,143,0
+		MAKEBOXES 82,160,86,163,0
+		MAKEBOXES 94,160,98,163,0
+		MAKEBOXES 86,163,94,166,0
+		;BOMB
+		MAKEBOXES 104,56,110,59,15
+		MAKEBOXES 101,59,104,62,15
+		MAKEBOXES 98,62,102,67,15	
+		MAKEBOXES 95,65,104,68,15
+		MAKEBOXES 93,67,106,73,15
+		MAKEBOXES 90,70,109,79,15
+		MAKEBOXES 90,77,109,83,15
+		MAKEBOXES 88,73,111,80,15
+		MAKEBOXES 93,82,106,86,15
+		MAKEBOXES 95,85,104,89,15
+		
+		SETCURSOR 17,17
+		MOV DX, OFFSET USERNAME
+		MOV AH, 0AH
+		INT 21H
+		
+		CALL MAINMENU
+ RET
+ TITLESCREEN ENDP
+ 
+ UPDATE PROC
+		MOV _COUNTER, 0
+		ADD _YSTART, 22
+		ADD _YEND, 22
+		MOV _XSTART, 0
+		MOV _XEND, 40
+		RET
+UPDATE ENDP
+
+MAINMENU PROC
+	CALL BACKGROUND_COLOR
+	MAKEBOXES 63,30,250,60,1
+	MAKEBOXES 63,62,250,92,11
+	MAKEBOXES 63,94,250,124,11
+	MAKEBOXES 63,126,250,156,11
+	
+	MAKEBOXES  131, 55, 180, 59, 2 ; PADDLE
+	DRAWBALL  50, 151 ; BALL 
+	
+	MAKEBOXES  131, 87, 180, 91, 1 ; PADDLE
+	DRAWBALL  82, 151 ; BALL 
+	
+	MAKEBOXES  131, 119, 180, 123, 1 ; PADDLE
+	DRAWBALL  114, 151 ; BALL 
+	
+	MAKEBOXES 131, 151, 180, 155, 1 ; PADDLE
+	DRAWBALL  146, 151 ; BALL 
+	CALL PRINT
+		
+	GETINPUT:	
+	MOV AH,01H
+	INT 16H
+	JNZ KEYPRESS
+	JMP GETINPUT
+	
+	KEYPRESS:
+		MOV AH,00H
+		INT 16H
+		
+		.IF(AL == 13) 
+			.IF (YCORD < 60 && YCORD > 30 )
+			JMP ENTERS
+			.ENDIF
+		.ENDIF
+		
+		.IF(AL == 13) 
+			.IF (YCORD < 92 && YCORD > 62 )
+			JMP ENTERS1
+			.ENDIF
+		.ENDIF
+		
+		.IF(AL == 13) 
+			.IF (YCORD < 124 && YCORD > 94 )
+				JMP ENTERS2
+			.ENDIF
+		.ENDIF
+		
+		.IF(AL == 13) 
+			.IF (YCORD < 156 && YCORD > 126 )
+				JMP ENTERS3
+			.ENDIF
+		.ENDIF
+		
+		CMP AH, 48H
+		JE UP
+		
+		
+		CMP AH, 50H
+		JE DOWN
+		
+		CMP AL, 27H
+		JE EXIT
+		
+		JMP NEXT
+		ENTERS::
+		JMP GAMELOOP
+		ENTERS1::
+		CALL INSTRUCTIONPAGE
+		JMP NEXT
+		ENTERS2::
+		JMP NEXT
+		ENTERS3::
+		JMP EXIT
+		
+		UP:
+			HIGHLIGHTMENU 0,XCORD,YCORD
+			.IF (YCORD > 35)
+				SUB YCORD, 35
+			.ENDIF
+			HIGHLIGHTMENU 6,XCORD,YCORD
+			JMP NEXT
+		
+		DOWN:
+			HIGHLIGHTMENU 0,XCORD,YCORD
+			.IF (YCORD < 140	)
+				ADD YCORD, 35
+			.ENDIF
+			HIGHLIGHTMENU 6,XCORD,YCORD
+			JMP NEXT
+	NEXT:
+	JMP GETINPUT
+RET
+MAINMENU ENDP
+ 
+ 	PRINT PROC
+		MOV AH ,02H
+		MOV BX, 0
+		MOV DH ,5; MOVEMENT UP AND DOWN OF STRING PRINTING
+		MOV DL ,15 ; LEFT AND RIGHT PRINTING 
+		INT 10H
+		LEA DX,STARTGAME
+		MOV AH,9H
+		INT 21H
+		MOV AX, 0
+		MOV BX, 0
+		MOV CX, 0
+		MOV DX, 0
+		MOV AH ,02H
+		MOV BX, 0
+		MOV DH ,9; MOVEMENT UP AND DOWN OF STRING PRINTING
+		MOV DL ,15 ; LEFT AND RIGHT PRINTING 
+		INT 10H
+		LEA DX,INSTRUCTION
+		MOV AH,9H
+		INT 21H
+		MOV AX, 0
+		MOV BX, 0
+		MOV CX, 0
+		MOV DX, 0
+		MOV AH ,02H
+		MOV BX, 0
+		MOV DH ,13; MOVEMENT UP AND DOWN OF STRING PRINTING
+		MOV DL ,15 ; LEFT AND RIGHT PRINTING 
+		INT 10H
+		LEA DX, SCOREBOARD
+		MOV AH,9H
+		INT 21H
+		MOV AX, 0
+		MOV BX, 0
+		MOV CX, 0
+		MOV DX, 0
+		MOV AH ,02H
+		MOV BX, 0
+		MOV DH ,17; MOVEMENT UP AND DOWN OF STRING PRINTING
+		MOV DL ,15	 ; LEFT AND RIGHT PRINTING 
+		INT 10H
+		LEA DX, ESCC
+		MOV AH,9H
+		INT 21H
+RET
+PRINT ENDP
+ 
+LOSEPAGE PROC
+	CALL BACKGROUND_COLOR
+	MAKEBOXES 95,70,220,100,11
+	MAKEBOXES 94,150,225,180,1
+	DRAWEMOJI 75, 100, LOOSEEMOJI
+	DRAWEMOJI 75, 193, LOOSEEMOJI
+
+	MOV AH ,02H
+	MOV BX, 0
+	MOV DH ,10; MOVEMENT UP AND DOWN OF STRING PRINTING
+	MOV DL ,15 ; LEFT AND WRITE PRINTING 
+	INT 10H
+	LEA DX,GAMEOVER
+	MOV AH,9H
+	INT 21H
+	MOV AX, 0
+	MOV BX, 0
+	MOV CX, 0
+	MOV DX, 0
+	MOV AH ,02H
+	MOV BX, 0
+	MOV DH ,20; MOVEMENT UP AND DOWN OF STRING PRINTING
+	MOV DL ,12 ; LEFT AND WRITE PRINTING 
+	INT 10H
+	LEA DX,LOSERETURN
+	MOV AH,9H
+	INT 21H
+	
+GETINPUTLOSE:	
+	MOV AH,00H
+	INT 16H
+	CALL MAINMENU
+RET
+LOSEPAGE ENDP
+
+INSTRUCTIONPAGE PROC
+	MOV AH, 06H 
+	MOV AL, 0
+	MOV BH, 0
+	MOV BL, 0
+	MOV CX,0
+	MOV DH,50
+	MOV DL,50
+	INT 10H
+	MOV AH ,02H
+	MOV BX, 0
+	MOV DH ,1; MOVEMENT UP AND DOWN OF STRING PRINTING
+	MOV DL ,3 ; LEFT AND WRITE PRINTING 
+	INT 10H
+	LEA DX,INST1
+	MOV AH,9H
+	INT 21H
+	CALL FLUSH_REGISTERS
+	;RIGHT ARROW
+	MAKEBOXES 115,11,133,13,6
+	MAKEBOXES 125,5,127,11,6
+	MAKEBOXES 127,5,129,7,1
+	MAKEBOXES 129,7,131,9,1
+	MAKEBOXES 131,9,133,11,1
+	MAKEBOXES 125,13,127,19,6
+	MAKEBOXES 127,17,129,19,1
+	MAKEBOXES 129,15,131,17,1
+	MAKEBOXES 131,13,133,15,1
+	MOV AH ,02H
+	MOV BX, 0
+	MOV DH ,4; MOVEMENT UP AND DOWN OF STRING PRINTING
+	MOV DL ,3 ; LEFT AND WRITE PRINTING 
+	INT 10H
+	LEA DX,INST2
+	MOV AH,9H
+	INT 21H
+	;LEFT ARROW
+	MAKEBOXES 115,36,132,38,6
+	MAKEBOXES 119,30,121,32,1
+	MAKEBOXES 117,32,119,34,1
+	MAKEBOXES 115,34,117,36,1
+	MAKEBOXES 115,38,117,40,1
+	MAKEBOXES 117,40,119,42,1
+	MAKEBOXES 119,42,121,44,1
+	MAKEBOXES 121,30,123,44,6
+	MOV AH ,02H
+	MOV BX, 0
+	MOV DH ,7; MOVEMENT UP AND DOWN OF STRING PRINTING
+	MOV DL ,3 ; LEFT AND WRITE PRINTING 
+	INT 10H
+	LEA DX,INST3
+	MOV AH,9H
+	INT 21H
+	CALL FLUSH_REGISTERS
+	;BLUE BRICK
+	MAKEBOXES 190, 55, 215, 65, 1
+	MOV AH ,02H
+	MOV BX, 0
+	MOV DH ,10; MOVEMENT UP AND DOWN OF STRING PRINTING
+	MOV DL ,3 ; LEFT AND WRITE PRINTING 
+	INT 10H
+	LEA DX,INST4
+	MOV AH,9H
+	INT 21H
+	CALL FLUSH_REGISTERS
+	;RED BRICK
+	MAKEBOXES 205, 78, 230, 88	, 4
+	MOV AH ,02H
+	MOV BX, 0
+	MOV DH ,18; MOVEMENT UP AND DOWN OF STRING PRINTING
+	MOV DL ,12 ; LEFT AND WRITE PRINTING 
+	INT 10H
+	LEA DX,INST5
+	MOV AH,9H
+	INT 21H
+	CALL FLUSH_REGISTERS
+
+	GETINPUT:	
+	MOV AH,01H
+	INT 16H
+	JNZ KEYPRESS
+	JMP GETINPUT
+	KEYPRESS:
+		MOV AH,00H
+		INT 16H
+		CALL MAINMENU
+	NEXT:
+	JMP GETINPUT
+
+RET
+INSTRUCTIONPAGE ENDP
+
+FLUSH_REGISTERS PROC
+	MOV AX, 0
+	MOV BX, 0
+	MOV CX, 0
+	MOV DX, 0
+	RET
+FLUSH_REGISTERS ENDP
+
+NEWGAMEASSIGN PROC
+ASSIGNBOX B111, 15,30,37,44,03,1,0,0
+ASSIGNBOX B112, 38,30,68,44,05,1,0,0
+ASSIGNBOX B113, 69,30,107,44,09,1,0,0
+ASSIGNBOX B114, 108,30,146,44,00,1,0,0
+ASSIGNBOX B115, 147,30,185,44,15,1,0,0
+ASSIGNBOX B116, 186,30,224,44,05,1,0,0
+ASSIGNBOX B117, 225,30,263,44,03,1,0,0
+ASSIGNBOX B118, 264,30,290,44,03,1,0,0
+ASSIGNBOX B119, 291,30,303,44,03,1,0,0
+
+ASSIGNBOX B121, 18,45,51,59,06,1,0,0
+ASSIGNBOX B122, 52,45,96,59,07,1,0,0
+ASSIGNBOX B123, 97,45,115,59,06,1,0,0
+ASSIGNBOX B124, 116,45,155,59,07,1,0,0
+ASSIGNBOX B125, 156,45,200,59,06,1,0,0
+ASSIGNBOX B126, 201,45,240,59,07,1,0,0
+ASSIGNBOX B127, 241,45,296,59,06,1,0,0
+
+;------------------------------LEVEL 2 BRICKS -----------------------------
+;FIRST LINE
+ASSIGNBOX L11, 140,30,170,44,03,2,0,0
+;SECOND LINE
+ASSIGNBOX L12, 140,45,170,59,03,2,0,0
+ASSIGNBOX L13, 109,45,139,59,14,2,0,0
+ASSIGNBOX L14, 171,45,201,59,14,2,0,0
+;THIRD LINE
+ASSIGNBOX L15, 140,60,170,74,03,2,0,0
+ASSIGNBOX L16, 109,60,139,74,14,2,0,0
+ASSIGNBOX L17, 171,60,201,74,14,2,0,0
+ASSIGNBOX L18, 78 ,60,108,74,03,2,0,0
+ASSIGNBOX L19, 202,60,232,74,03,2,0,0
+;FOURTH LINE
+ASSIGNBOX L20, 140,75,170,89,03,2,0,0
+ASSIGNBOX L21, 109,75,139,89,14,2,0,0
+ASSIGNBOX L22, 171,75,201,89,14,2,0,0
+ASSIGNBOX L23, 78 ,75,108,89,03,2,0,0
+ASSIGNBOX L24, 202,75,232,89,03,2,0,0
+ASSIGNBOX L25, 47,75,77,89,14,2,0,0
+ASSIGNBOX L26, 233,75,263,89,14,2,0,0
+;FIFTH LINE 
+ASSIGNBOX L27, 140,90,170,104,03,2,0,0
+ASSIGNBOX L28, 109,90,139,104,14,2,0,0
+ASSIGNBOX L29, 171,90,201,104,14,2,0,0
+ASSIGNBOX L30, 78 ,90,108,104,03,2,0,0
+ASSIGNBOX L31, 202,90,232,104,03,2,0,0
+ASSIGNBOX L32, 47 ,90,77 ,104,14,2,0,0
+ASSIGNBOX L33, 233,90,263,104,14,2,0,0
+;SIXTH LINE
+ASSIGNBOX L34, 140,105,170,119,03,2,0,0
+ASSIGNBOX L35, 109,105,139,119,14,2,0,0
+ASSIGNBOX L36, 171,105,201,119,14,2,0,0
+ASSIGNBOX L37, 78 ,105,108,119,03,2,0,0
+ASSIGNBOX L38, 202,105,232,119,03,2,0,0
+;SEVENTH LINE
+ASSIGNBOX L39, 140,120,170,134,03,2,0,0
+ASSIGNBOX L40, 109,120,139,134,14,2,0,0
+ASSIGNBOX L41, 171,120,201,134,14,2,0,0
+;EIGHT LINE
+ASSIGNBOX L42, 140,135,170,149,03,2,0,0
+;MID LEFT BRICK
+ASSIGNBOX L43, 30 ,75,40,105,15,2,0,0
+;MID RIGHT BRICK
+ASSIGNBOX L44, 269 ,75,279,105,15,2,0,0
+;------------------------------ LEVEL 3 BRICKS ----------------------------
+; C31 , C32
+;HEART TOP LINE
+ASSIGNBOX C31, 110,    31  ,  138,   41,    04 , 3,1,0
+ASSIGNBOX C32, 210,    31  ,  240,   41,    04  , 3,1,0
+;C33,C34,C35, C36
+;HEART SECOND LINE
+ASSIGNBOX C33, 	 100,    42  ,  125,   52,    03  , 3,0,0
+ASSIGNBOX C34, 	 126,    42  ,  151,   52,    02  , 3,0,0
+ASSIGNBOX NEW1,  152,	 42  ,	177,   52,    01  , 3,0,1
+ASSIGNBOX NEW2,  178,	 42  ,	203,   52,    00  , 3,0,0
+ASSIGNBOX NEW3,  204,	 42  ,	229,   52,    15  , 3,0,0
+ASSIGNBOX C35, 	 230,    42  ,  255,   52,    14  , 3,0,0
+ASSIGNBOX C36, 	 256,    42  ,  281,   52,    08  , 3,0,0
+;C37,C38,C38,C39, C40, C41, C41, C42, C43, C44, 
+;HEART THIRD LINE
+ASSIGNBOX C37,	 114,   53  ,   137,   63,    13  , 3,0,0
+ASSIGNBOX C38,	 138 ,   53  ,  163,   63,    12  , 3,0,0
+ASSIGNBOX C39,	 164 ,   53  ,  189,   63,    11  , 3,0,0
+ASSIGNBOX C40,	 190 ,   53  ,  215,   63,    10  , 3,0,0
+ASSIGNBOX C41,	 216 ,   53  ,  241,   63,    09  , 3,0,0
+;C51,C52,C53,C54,C55,C56,C57,C58,
+;FOURTH LINE
+ASSIGNBOX C51,	 124 ,   64  ,  149,   74,    04  , 3,1,0
+ASSIGNBOX C52,	 150 ,   64  ,  175,   74,    03  , 3,0,0
+ASSIGNBOX C53,	 176 ,   64  ,  201,   74,    02  , 3,0,0
+ASSIGNBOX C54,	 202 ,   64  ,  227,   74,    01  , 3,0,1
+
+;C45, C46, C47, C48, C49, C50,
+;FIFTH LINE 
+ASSIGNBOX C45, 134 ,   75  ,  161,   85,    04  , 3,1,0
+ASSIGNBOX C46, 162 ,   75  ,  189,   85,    12  , 3,0,0
+ASSIGNBOX C47, 190 ,   75  ,  214,   85,    11  , 3,0,0
+
+;C59, C60, C61, C62,
+;SIXTH LINE
+ASSIGNBOX C59, 149,    86  ,  174,   96,    06  , 3,0,0
+ASSIGNBOX C60, 175 ,   86  ,  200,   96,    05  , 3,0,0
+
+;C63, C64
+;SEVENTH LINE
+ASSIGNBOX C63, 160 ,   97  ,  174,   107,    01  , 3,0,1
+ASSIGNBOX C64, 175 ,   97  ,  189,   107,    00  , 3,0,0
+;C65,
+;EIGHT LINE HEART
+ASSIGNBOX C65, 170 ,   108  ,  180,   118,    04  , 3,1,0
+RET
+NEWGAMEASSIGN ENDP
+ 
+ PLAYSOUND PROC USES AX BX DX CX
+	MOV	DX,1000	; NUMBER OF TIMES TO REPEAT WHOLE ROUTINE.
+
+	MOV	BX,10000		; FREQUENCY VALUE.
+	MOV	AL, 10110110B	; THE MAGIC NUMBER (USE THIS BINARY NUMBER ONLY)
+	OUT     43H, AL          ; SEND IT TO THE INITIALIZING PORT 43H TIMER 2.
+	NEXT_FREQUENCY:          ; THIS IS WERE WE WILL JUMP BACK TO 2000 TIMES.
+	MOV     AX, BX           ; MOVE OUR FREQUENCY VALUE INTO AX.
+	OUT     42H, AL          ; SEND LSB TO PORT 42H.
+	MOV     AL, AH           ; MOVE MSB INTO AL  
+	OUT     42H, AL          ; SEND MSB TO PORT 42H.
+	IN      AL, 61H          ; GET CURRENT VALUE OF PORT 61H.
+	OR      AL, 00000011B    ; OR AL TO THIS VALUE, FORCING FIRST TWO BITS HIGH.
+	OUT     61H, AL          ; COPY IT TO PORT 61H OF THE PPI CHIP
+							; TO TURN ON THE SPEAKER.
+	MOV     CX, 100          ; REPEAT LOOP 100 TIMES
+	DELAY_LOOP:              ; HERE IS WHERE WE LOOP BACK TOO.
+	LOOP    DELAY_LOOP       ; JUMP REPEATEDLY TO DELAY_LOOP UNTIL CX = 0
+	INC     BX               ; INCREMENTING THE VALUE OF BX LOWERS 
+							; THE FREQUENCY EACH TIME WE REPEAT THE
+							; WHOLE ROUTINE
+	DEC     DX               ; DECREMENT REPEAT ROUTINE COUNT
+	CMP     DX, 0       
+	; IS DX (REPEAT COUNT) = TO 0
+	JNZ     NEXT_FREQUENCY   ; IF NOT JUMP TO NEXT_FREQUENCY
+							; AND DO WHOLE ROUTINE AGAIN.
+							; ELSE DX = 0 TIME TO TURN SPEAKER OFF
+	IN      AL,61H           ; GET CURRENT VALUE OF PORT 61H.
+	AND	AL,11111100B	; AND AL TO THIS VALUE, FORCING FIRST TWO BITS LOW.
+	OUT     61H,AL           ; COPY IT TO PORT 61H OF THE PPI CHIP
+	RET 	
+PLAYSOUND ENDP
+ 
+END MAIN
+
+
+		
+	
+	
+	
+
+

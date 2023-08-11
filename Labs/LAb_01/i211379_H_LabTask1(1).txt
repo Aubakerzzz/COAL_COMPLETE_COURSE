@@ -1,0 +1,19 @@
+;TASK 1
+.model small 
+.stack 100h
+.data
+
+.code
+
+mov al, 255; AX = 00FF
+mov ax, 567; AX = 0237
+mov ah, 255; AX = FF37
+mov al, 254; AX = FFFE
+mov bx, 0FF4h; BX = 0FF4
+mov cx, 1237o; CX = 029F
+mov dl, 01001001b; DX = 0049
+mov dh, 0Ah; DX = 0A49
+
+mov ah, 4ch
+int 21h
+end

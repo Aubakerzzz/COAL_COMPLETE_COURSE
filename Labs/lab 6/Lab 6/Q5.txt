@@ -1,0 +1,51 @@
+.model small
+.stack 100h
+
+;Question 05
+
+
+.data
+
+
+.code
+mov ax, @data
+mov ds, ax
+mov ax, 0
+
+
+mov ax, 2
+mov bx, 10
+
+LOOP1:
+	cmp ax, bx
+	jb L1
+	jnb exit
+	LOOP L1
+
+L1:
+	mov bx, ax
+	add bx, 1
+	add ax, bx
+	LOOP1
+	
+exit:
+mov ah, 04ch
+int 21h
+end
+	
+
+	
+
+
+	
+
+
+
+
+
+
+
+
+
+
+

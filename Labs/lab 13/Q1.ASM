@@ -1,0 +1,34 @@
+.MODEL SMALL
+.STACK 100H
+
+.DATA
+
+TEMP DB "KEY PRESSED$"
+
+.CODE
+
+	MOV AX, @DATA
+	MOV DS, AX
+	MOV AX, 0
+	
+	L1:
+		mov ax, 0100h
+		int 16h
+		jz L1
+		
+   KEY_PRESSED:
+		LEA DX, TEMP
+		mov ah, 09h
+		int 21h
+		MOV AH, 00H
+		INT 16H
+	
+
+
+
+
+EXIT::
+	MOV AH, 04CH
+	INT 21H
+	END
+	

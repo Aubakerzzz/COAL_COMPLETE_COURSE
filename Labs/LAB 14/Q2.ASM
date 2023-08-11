@@ -1,0 +1,49 @@
+
+.MODEL SMALL 
+.STACK 100H 
+.DATA 
+  
+COUNTER DB 0
+  
+.CODE 
+MAIN PROC FAR 
+ MOV AX,@DATA 
+ MOV DS,AX 
+ MOV AX, 0
+ 
+ 
+	INPUT PROC
+		
+		.WHILE COUNTER < 5
+			MOV AH, 1
+			INT 21H
+			MOV AH,0
+			PUSH AX
+			INC COUNTER
+		.ENDW
+		
+	INPUT ENDP	
+	
+	MOV COUNTER , 0
+	
+	OUTPUTSORTING PROC
+	
+		.WHILE COUNTER < 5
+			POP DX
+			MOV AH, 2
+			INT 21H
+			INC COUNTER
+		.ENDW
+	
+	OUTPUTSORTING ENDP
+	
+
+ 
+
+  
+ ;interrupt to exit
+ MOV AH,4CH
+ INT 21H 
+  
+MAIN ENDP 
+END MAIN 

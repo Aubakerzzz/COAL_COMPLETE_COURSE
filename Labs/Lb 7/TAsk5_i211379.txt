@@ -1,0 +1,84 @@
+.model small
+.stack 100h
+
+
+.data
+
+arr db 5 DUP(?)
+
+
+.code
+
+main proc
+
+mov ax, @data
+mov ds, ax
+
+
+print"Enter 5 numbers"
+mov cx, 5
+mov bx, offset arr
+mov ah, 1
+
+input:
+	int 21h
+	mov [bx], al
+	inc bx
+Loop input
+
+mov cx, 5 
+dec cx
+
+outerloop:
+	mov bx, cx
+	mov si, 0
+	
+	CompLOOP
+		mov al,  arr[si]
+		mov dl, arr[si+1]
+		cmp al, dl
+		jc noSwap
+		
+		mov arr[si], dl
+		mov arr[si+1], al
+		noSwap:
+			inc si
+			dec bx
+			jnz CompLoop
+			
+			loop outerloop
+			
+			mov ah, 2
+			mov dl, 10
+			int 21h
+			
+			mov dl, 13
+			int 21h
+			
+			mov cx, 5
+			mov bx, offset arr
+			
+			Outputs:
+				mov dl, [bx]
+				mov ah,2
+				int 21h
+				mov dl, 32
+				mov ah,2
+				int 21h
+				
+				inc bx
+				loop Outputs
+				
+			main endp
+			ret
+			
+	
+
+
+
+
+
+mov ah , 4ch
+	int 21h
+	end
+	

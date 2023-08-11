@@ -1,0 +1,29 @@
+.model small
+.stack 100h
+
+
+.DATA	
+
+
+var1 DB 2
+
+
+
+.CODE
+
+
+mov ax var1
+mov bl,2
+div bl
+cmp ah,0
+je exit
+
+
+
+
+
+exit:
+
+mov ah , 4ch
+int 21h
+end
